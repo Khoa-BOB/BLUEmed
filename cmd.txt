@@ -2,8 +2,14 @@
 python -m venv .env
 source .env/bin/activate
 
+#Download ollama to local machine
+https://ollama.com/download
+
 # Install ollama
 pip install ollama
+
+Run local host 
+http://localhost:11434
 
 # Pull and run the model
 ollama run hf.co/bartowski/Meta-Llama-3.1-8B-Instruct-GGUF:Q4_K_M
