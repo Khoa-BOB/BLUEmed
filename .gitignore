@@ -1,0 +1,56 @@
+# --- Python ---
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.egg
+*.egg-info/
+.eggs/
+
+# --- Virtual environments ---
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+
+# --- Jupyter / notebooks ---
+.ipynb_checkpoints
+
+# --- Logs & databases ---
+*.log
+*.sqlite3
+*.db
+
+# --- PyInstaller / build ---
+build/
+dist/
+*.spec
+
+# --- Coverage / testing ---
+.coverage
+.tox/
+.nox/
+.cache/
+pytest_cache/
+
+# --- IDE & editors ---
+.vscode/
+.idea/
+*.swp
+*.swo
+*.DS_Store
+
+# --- Ollama / models / local cache ---
+ollama/
+.ollama/
+~/.ollama/
+models/
+*.gguf
+
+# --- Environment files ---
+.env.local
+.env.production
+.en
