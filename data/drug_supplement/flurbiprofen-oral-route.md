@@ -1,0 +1,407 @@
+# Flurbiprofen (oral route)
+
+## Brand Name
+
+### US Brand Name
+
+Ansaid
+
+### Canadian Brand Name
+
+Flurbiprofen
+
+Froben
+
+Froben SR
+
+Teva-Flurbiprofen
+
+## Description
+
+Flurbiprofen is a nonsteroidal anti-inflammatory drug (NSAID) used to relieve symptoms of arthritis (osteoarthritis and rheumatoid arthritis), such as inflammation, swelling, stiffness, and joint pain. However, this medicine does not cure arthritis and will help you only as long as you continue to take it.
+
+This medicine is available only with your doctor's prescription.
+
+This product is available in the following dosage forms:
+
+- Tablet
+
+## Before Using
+
+In deciding to use a medicine, the risks of taking the medicine must be weighed against the good it will do. This is a decision you and your doctor will make. For this medicine, the following should be considered:
+
+### Allergies
+
+Tell your doctor if you have ever had any unusual or allergic reaction to this medicine or any other medicines. Also tell your health care professional if you have any other types of allergies, such as to foods, dyes, preservatives, or animals. For non-prescription products, read the label or package ingredients carefully.
+
+### Pediatric
+
+Appropriate studies have not been performed on the relationship of age to the effects of flurbiprofen in the pediatric population. Safety and efficacy have not been established.
+
+### Geriatric
+
+Appropriate studies performed to date have not demonstrated geriatric-specific problems that would limit the usefulness of flurbiprofen in the elderly. However, elderly patients are more likely to have age-related kidney, stomach, or heart problems, which may require caution and an adjustment in the dose for patients receiving flurbiprofen.
+
+### Drug Interactions
+
+Although certain medicines should not be used together at all, in other cases two different medicines may be used together even if an interaction might occur. In these cases, your doctor may want to change the dose, or other precautions may be necessary. When you are taking this medicine, it is especially important that your healthcare professional know if you are taking any of the medicines listed below. The following interactions have been selected on the basis of their potential significance and are not necessarily all-inclusive.
+
+Using this medicine with any of the following medicines is not recommended. Your doctor may decide not to treat you with this medication or change some of the other medicines you take.
+
+- Ketorolac
+
+Using this medicine with any of the following medicines is usually not recommended, but may be required in some cases. If both medicines are prescribed together, your doctor may change the dose or how often you use one or both of the medicines.
+
+- Abciximab
+- Aceclofenac
+- Acemetacin
+- Acenocoumarol
+- Amiloride
+- Amineptine
+- Amitriptyline
+- Amitriptylinoxide
+- Amoxapine
+- Amtolmetin Guacil
+- Anagrelide
+- Apalutamide
+- Apixaban
+- Ardeparin
+- Argatroban
+- Aspirin
+- Balsalazide
+- Bemetizide
+- Bemiparin
+- Bendroflumethiazide
+- Benzthiazide
+- Betrixaban
+- Bismuth Subsalicylate
+- Bivalirudin
+- Bromfenac
+- Budesonide
+- Bufexamac
+- Bumetanide
+- Cangrelor
+- Carbamazepine
+- Celecoxib
+- Certoparin
+- Chlorothiazide
+- Chlorthalidone
+- Choline Magnesium Trisalicylate
+- Choline Salicylate
+- Cilostazol
+- Citalopram
+- Clomipramine
+- Clonixin
+
+Using this medicine with any of the following medicines may cause an increased risk of certain side effects, but using both drugs may be the best treatment for you. If both medicines are prescribed together, your doctor may change the dose or how often you use one or both of the medicines.
+
+- Acebutolol
+- Atenolol
+- Azilsartan
+- Azilsartan Medoxomil
+- Benazepril
+- Betaxolol
+- Bisoprolol
+- Candesartan
+- Captopril
+- Carteolol
+- Carvedilol
+- Celiprolol
+- Dicumarol
+- Enalapril
+- Enalaprilat
+- Eprosartan
+- Esmolol
+- Fosinopril
+- Irbesartan
+- Labetalol
+- Levobunolol
+- Lisinopril
+- Losartan
+- Metipranolol
+- Metoprolol
+- Moexipril
+- Nadolol
+- Nebivolol
+- Olmesartan
+- Oxprenolol
+- Penbutolol
+- Perindopril
+- Pindolol
+- Propranolol
+- Quinapril
+- Ramipril
+- Sotalol
+- Spirapril
+- Telmisartan
+- Timolol
+
+### Other Interactions
+
+Certain medicines should not be used at or around the time of eating food or eating certain types of food since interactions may occur.  Using alcohol or tobacco with certain medicines may also cause interactions to occur.  Discuss with your healthcare professional the use of your medicine with food, alcohol, or tobacco.
+
+### Other Medical Problems
+
+The presence of other medical problems may affect the use of this medicine. Make sure you tell your doctor if you have any other medical problems, especially:
+
+- Anemia or
+- Bleeding problems or
+- Congestive heart failure or
+- Dehydration or
+- Edema (fluid retention or body swelling) or
+- Heart attack, recent or
+- Hyperkalemia (high potassium in the blood) or
+- Hypertension (high blood pressure) or
+- Hypovolemia (low blood volume) or
+- Kidney disease or
+- Liver disease (eg, hepatitis) or
+- Stomach ulcers or bleeding, history of or
+- Stroke, history of—Use with caution. May make these conditions worse.
+
+- Aspirin-sensitive asthma or
+- Aspirin sensitivity, history of—Should not be used in patients with these conditions.
+
+- Heart surgery (eg, coronary artery bypass graft [CABG])—Should not be used to relieve pain right before or after the surgery.
+
+## Proper Use
+
+For safe and effective use of this medicine, do not use more of it, do not use it more often, and do not use it for a longer time than ordered by your doctor. Using too much of this medicine may increase the chance of unwanted effects, especially in elderly patients.
+
+This medicine comes with a Medication Guide. Read and follow the instructions carefully. Ask your doctor if you have any questions.
+
+Swallow the tablet whole. Do not cut, break, or chew it.
+
+When used for severe or continuing arthritis, this medicine must be taken regularly as ordered by your doctor in order for it to help you. This medicine usually begins to work within one week, but in severe cases up to two weeks or even longer may pass before you begin to feel better. Also, several weeks may pass before you feel the full effects of this medicine.
+
+### Dosing
+
+The dose of this medicine will be different for different patients. Follow your doctor's orders or the directions on the label. The following information includes only the average doses of this medicine. If your dose is different, do not change it unless your doctor tells you to do so.
+
+The amount of medicine that you take depends on the strength of the medicine. Also, the number of doses you take each day, the time allowed between doses, and the length of time you take the medicine depend on the medical problem for which you are using the medicine.
+
+- For oral dosage form (tablets): For osteoarthritis and rheumatoid arthritis: Adults—200 to 300 milligrams (mg) per day, divided into 2 to 4 equal doses. Your doctor may adjust your dose as needed. Children—Use and dose must be determined by your doctor.
+
+- For osteoarthritis and rheumatoid arthritis: Adults—200 to 300 milligrams (mg) per day, divided into 2 to 4 equal doses. Your doctor may adjust your dose as needed. Children—Use and dose must be determined by your doctor.
+
+- Adults—200 to 300 milligrams (mg) per day, divided into 2 to 4 equal doses. Your doctor may adjust your dose as needed.
+- Children—Use and dose must be determined by your doctor.
+
+### Missed Dose
+
+If you miss a dose of this medicine, take it as soon as possible. However, if it is almost time for your next dose, skip the missed dose and go back to your regular dosing schedule. Do not double doses.
+
+### Storage
+
+Store the medicine in a closed container at room temperature, away from heat, moisture, and direct light. Keep from freezing.
+
+Keep out of the reach of children.
+
+Do not keep outdated medicine or medicine no longer needed.
+
+Ask your healthcare professional how you should dispose of any medicine you do not use.
+
+## Precautions
+
+It is very important that your doctor check your progress at regular visits to make sure that this medicine is working properly and to decide if you should continue to use it. Blood and urine tests may be needed to check for unwanted effects.
+
+This medicine may increase your risk of having a heart attack or stroke. This is more likely in people who already have heart disease. People who use this medicine for a long time might also have a higher risk. Tell your doctor if you have chest pain that may spread to your arms, jaw, back, or neck, trouble breathing, nausea, slurred speech, unusual sweating, or faintness.
+
+This medicine may cause bleeding in your stomach or intestines. These problems can happen without warning signs. This is more likely if you have had a stomach ulcer in the past, if you smoke or drink alcohol regularly, are over 60 years of age, are in poor health, or are using certain other medicines (such as steroids or a blood thinner).
+
+Check with your doctor right away if you have any symptoms of liver problems including dark-colored urine or pale stools, nausea, vomiting, loss of appetite, pain in your upper stomach, or yellow skin or eyes.
+
+Check with your doctor right away if you have the following symptoms while using the medicine: blood in the urine, change in the frequency of urination or amount of urine, difficulty with breathing, drowsiness, increased thirst, loss of appetite, nausea or vomiting, or swelling of the feet or lower legs. These may be symptoms of a serious kidney problem.
+
+Serious side effects can occur during treatment with this medicine. Sometimes serious side effects can occur without warning. However, possible warning signs are including black, tarry stools, and/or vomiting of blood or material that looks like coffee grounds, decreased urination, severe stomach pain, skin rash, swelling of the face, fingers, feet, and/or lower legs, unusual bleeding or bruising, unusual weight gain, or yellow skin or eyes . Also, signs of serious heart problems could occur such as chest pain, fast or irregular heartbeat, slurring of speech, tightness in the chest, unusual flushing or warmth of the skin, or weakness. Check with your doctor immediately if you notice any of these warning signs .
+
+This medicine may cause a serious type of allergic reaction called anaphylaxis. Although this is rare, it may occur often in patients who are allergic to aspirin or other nonsteroidal anti-inflammatory drugs. Anaphylaxis requires immediate medical attention. The most serious signs of this reaction are very fast or irregular breathing, gasping for breath, or fainting. Other signs may include changes in skin color of the face, very fast but irregular heartbeat or pulse, hive-like swellings on the skin, and puffiness or swelling of the eyelids or around the eyes. If these effects occur, get emergency help at once.
+
+Serious skin reactions can occur during treatment with this medicine. Check with your doctor right away if you have blistering, peeling, or loose skin, red skin lesions, severe acne or skin rash, sores or ulcers on the skin, or fever or chills while you are using this medicine. a
+
+Using this medicine during the later part of a pregnancy can harm your unborn baby. If you think you have become pregnant while using this medicine, tell your doctor right away.
+
+Check with your doctor immediately if blurred vision, difficulty in reading, or any other change in vision occurs during or after your treatment. Your doctor may want you to have your eyes checked by an ophthalmologist (eye doctor).
+
+Do not take other medicines unless they have been discussed with your doctor. This includes prescription or nonprescription (over-the-counter [OTC]) medicines and herbal or vitamin supplements.
+
+## Side Effects
+
+Along with its needed effects, a medicine may cause some unwanted effects. Although not all of these side effects may occur, if they do occur they may need medical attention.
+
+Check with your doctor immediately if any of the following side effects occur:
+
+### Less common
+
+- Abdominal or stomach pain
+- bladder pain
+- bloody or black, tarry stools
+- bloody or cloudy urine
+- constipation
+- difficult, burning, or painful urination
+- frequent urge to urinate
+- lower back or side pain
+- rash
+- severe stomach pain
+- swelling
+- vomiting of blood or material that looks like coffee grounds
+
+### Rare
+
+- Back or leg pains
+- bleeding gums
+- blistering, peeling, or loosening of the skin
+- bloody diarrhea
+- bloody nose
+- blurred vision
+- burning feeling in the chest or stomach
+- burning, crawling, itching, numbness, prickling, "pins and needles", or tingling feelings
+- chest pain
+- chills
+- clay-colored stools
+- cough
+- cracks in the skin
+- dark urine
+- decreased urine output
+- difficulty breathing
+- difficulty swallowing
+- dilated neck veins
+- dizziness
+- extreme fatigue
+- fast heartbeat
+- feeling faint, dizzy, or lightheaded
+- feeling of warmth or heat
+- fever with or without chills
+- flushing or redness of the skin, especially on the face and neck
+- general feeling of tiredness or weakness
+- greatly decreased frequency of urination
+- headache
+- high fever
+- hives or itching
+- hoarseness
+- increased blood pressure
+- increased sensitivity of the skin to sunlight
+- increased thirst
+- indigestion
+- irregular breathing
+- irregular heartbeat
+- joint pain, stiffness, or swelling
+- large, flat, blue, or purplish patches in the skin
+- large, hive-like swelling on the face, eyelids, lips, tongue, throat, hands, legs, feet, or sex organs
+- light-colored stools
+- loss of appetite
+- loss of heat from the body
+- muscle pain
+- nausea
+- nervousness
+- noisy breathing
+- nosebleeds
+- pale skin
+- pinpoint red or purple spots on the skin
+- pounding in the ears
+- puffiness or swelling of the eyelids or around the eyes, face, lips, or tongue
+- red skin lesions, often with a purple center
+- red, irritated eyes
+- red, swollen skin
+- redness or other discoloration of the skin
+- redness, swelling, or soreness of the tongue
+- scaly skin
+- severe or continuing stomach pain
+- severe sunburn
+- shakiness and unsteady walk
+- skin rash, encrusted, scaly and oozing
+- slow or fast heartbeat
+- sore throat
+- sores, ulcers, or white spots on the lips or in the mouth
+- stomach bloating or cramping
+- stomach upset
+- sweating
+- swelling of the face, fingers, feet, or lower legs
+- swelling or inflammation of the mouth
+- swollen or painful glands
+- tenderness in the stomach area
+- tightness in the chest
+- troubled breathing
+- unpleasant breath odor
+- unsteadiness, trembling, or other problems with muscle control or coordination
+- unusual bleeding or bruising
+- unusual tiredness or weakness
+- upper right abdominal or stomach pain
+- vomiting
+- weight gain
+- weight loss
+- yellow eyes or skin
+
+Get emergency help immediately if any of the following symptoms of overdose occur:
+
+### Symptom of overdose
+
+- Change in consciousness
+- fast or slow, or shallow breathing
+- heartburn
+- loss of consciousness
+- pain or discomfort in the chest, upper stomach, or throat
+- pale or blue lips, fingernails, or skin
+- unusual drowsiness, dullness, or feeling of sluggishness
+
+Some side effects may occur that usually do not need medical attention. These side effects may go away during treatment as your body adjusts to the medicine. Also, your health care professional may be able to tell you about ways to prevent or reduce some of these side effects. Check with your health care professional if any of the following side effects continue or are bothersome or if you have any questions about them:
+
+### Less common
+
+- Acid or sour stomach
+- belching
+- changes in vision
+- continuing ringing or buzzing or other unexplained noise in the ear
+- diarrhea
+- discouragement
+- excess air or gas in the stomach or intestines
+- fear
+- feeling of constant movement of self or surroundings
+- feeling sad or empty
+- full feeling
+- general feeling of discomfort or illness
+- hearing loss
+- irritability
+- lack of appetite
+- lack or loss of strength
+- lightheadedness
+- loss of interest or pleasure
+- loss of memory
+- passing gas
+- problems with memory
+- runny nose
+- sensation of spinning
+- sleepiness
+- sneezing
+- stomach discomfort
+- stuffy nose
+- tremor
+- trouble concentrating
+- trouble sleeping
+
+### Rare
+
+- Burning, dry, or itching eyes
+- confusion
+- discharge or excessive tearing
+- redness, pain, swelling of the eye, eyelid, or inner lining of the eyelid
+- transient, mild, pleasant aromatic odor
+- twitching
+
+Other side effects not listed may also occur in some patients. If you notice any other effects, check with your healthcare professional.
+
+Call your doctor for medical advice about side effects. You may report side effects to the FDA at 1-800-FDA-1088.
+
+Drug information provided by: Merative, Micromedex®
+
+Portions of this document last updated: November 01, 2025
+
+Copyright: © Merative US L.P. 1973, 2025. All rights reserved. Information is for End User's use only and may not be sold, redistributed or otherwise used for commercial purposes.
+
+## Products & Services
+
+- The Mayo Clinic Diet
+
+1. Drugs & Supplements
+2. Flurbiprofen (oral route) - Side effects & dosage
+
+DRG-20069793

@@ -1,0 +1,144 @@
+# Technetium tc 99m sulfurcolloid (injection route, route not applicable)
+
+## Brand Name
+
+### US Brand Name
+
+Cis Sulfur Colloid
+
+Technetium TC 99m TSC
+
+## Description
+
+Technetium Tc 99m sulfur colloid injection is a radiopharmaceutical. Radiopharmaceuticals are radioactive agents, which may be used to find and treat certain diseases or to study the function of the body's organs.
+
+Technetium Tc 99m sulfur colloid injection is used to find lymph node tumors in patients with breast cancer. It also helps your doctor see an image of your liver, spleen, bone marrow, or a peritoneo-venous (LeVeen) shunt, to see how well they are working.
+
+This medicine is to be given only by or under the direct supervision of a doctor with specialized training in nuclear medicine.
+
+This product is available in the following dosage forms:
+
+- Kit
+
+## Before Using
+
+In deciding to use a diagnostic test, any risks of the test must be weighed against the good it will do. This is a decision you and your doctor will make. Also, other things may affect test results. For this test, the following should be considered:
+
+### Allergies
+
+Tell your doctor if you have ever had any unusual or allergic reaction to this medicine or any other medicines. Also tell your health care professional if you have any other types of allergies, such as to foods, dyes, preservatives, or animals. For non-prescription products, read the label or package ingredients carefully.
+
+### Pediatric
+
+Appropriate studies performed to date have not demonstrated pediatric-specific problems that would limit the usefulness of technetium Tc 99m sulfur colloid injection in children to see images of the liver, spleen, bone marrow, or abdominal or stomach cavity.
+
+### Geriatric
+
+Although appropriate studies on the relationship of age to the effects of technetium Tc 99m sulfur colloid injection have not been performed in the geriatric population, no geriatric-specific problems have been documented to date.
+
+### Breastfeeding
+
+Studies suggest that this medication may alter milk production or composition. If an alternative to this medication is not prescribed, you should monitor the infant for side effects and adequate milk intake.
+
+### Drug Interactions
+
+Although certain medicines should not be used together at all, in other cases two different medicines may be used together even if an interaction might occur. In these cases, your doctor may want to change the dose, or other precautions may be necessary. Tell your healthcare professional if you are taking any other prescription or nonprescription (over-the-counter [OTC]) medicine.
+
+### Other Interactions
+
+Certain medicines should not be used at or around the time of eating food or eating certain types of food since interactions may occur.  Using alcohol or tobacco with certain medicines may also cause interactions to occur.  Discuss with your healthcare professional the use of your medicine with food, alcohol, or tobacco.
+
+### Other Medical Problems
+
+The presence of other medical problems may affect the use of this diagnostic test. Make sure you tell your doctor if you have any other medical problems, especially:
+
+- Cancer—Use with caution. May make this condition worse.
+
+## Proper Use
+
+A doctor or other trained health professional will give you or your child this medicine. Depending on your medical problem, this medicine is given as a shot under your skin, into a vein, or into your peritoneum (abdominal or stomach cavity).
+
+## Precautions
+
+It is very important that your doctor check you or your child closely while you are receiving this medicine. This will allow your doctor to see if the medicine is working properly and to decide if you should continue to use it.
+
+This medicine may cause a serious type of allergic reaction called anaphylaxis. Anaphylaxis requires immediate medical attention. The most serious signs of this reaction are very fast or irregular breathing, gasping for breath, wheezing, or fainting. Other signs may include changes in color of the skin of the face, very fast but irregular heartbeat or pulse, hive-like swellings on the skin, and puffiness or swellings of the eyelids or around the eyes. If these side effects occur, get emergency help at once.
+
+You may be exposed to radiation when you are given this medicine. This may also increase your risk to have cancer (especially in children). Talk with your doctor if you or your child have concerns about this.
+
+If you are a woman who can get pregnant, the imaging procedures should be done within 10 days after the start of your monthly period or a pregnancy test should be performed within 48 hours before the procedure.
+
+You may have a burning sensation at the injection site after receiving this medicine.
+
+## Side Effects
+
+Along with its needed effects, a medicine may cause some unwanted effects. Although not all of these side effects may occur, if they do occur they may need medical attention.
+
+Check with your doctor or nurse immediately if any of the following side effects occur:
+
+### More common
+
+- Cold, clammy skin
+- confusion
+- cough
+- difficulty swallowing
+- dizziness
+- fast heartbeat
+- fast, weak pulse
+- hives or welts
+- itching
+- lightheadedness
+- puffiness or swelling of the eyelids or around the eyes, face, lips, or  tongue
+- rash
+- redness of the skin
+- shortness of breath
+- sweating
+- tightness in the chest
+- unusual tiredness or weakness
+- wheezing
+
+### Less common
+
+- Chills
+- difficult or labored breathing
+- fever
+- heart stops
+- no breathing
+- no pulse or blood pressure
+- seizures
+- unconscious
+
+### Incidence not known
+
+- Burning, redness, swelling, or scarring at the injection site
+
+Some side effects may occur that usually do not need medical attention. These side effects may go away during treatment as your body adjusts to the medicine. Also, your health care professional may be able to tell you about ways to prevent or reduce some of these side effects. Check with your health care professional if any of the following side effects continue or are bothersome or if you have any questions about them:
+
+### Less common
+
+- Abdominal or stomach pain
+- feeling of warmth
+- nausea
+- numbness
+- redness of the face, neck, arms, and occasionally, upper chest
+- sweating
+- vomiting
+
+Other side effects not listed may also occur in some patients. If you notice any other effects, check with your healthcare professional.
+
+Call your doctor for medical advice about side effects. You may report side effects to the FDA at 1-800-FDA-1088.
+
+Drug information provided by: Merative, Micromedex®
+
+Portions of this document last updated: February 01, 2025
+
+Copyright: © Merative US L.P. 1973, 2025. All rights reserved. Information is for End User's use only and may not be sold, redistributed or otherwise used for commercial purposes.
+
+## Products & Services
+
+- The Mayo Clinic Diet
+
+1. Drugs & Supplements
+2. Technetium tc 99m sulfurcolloid (injection route, route not applicable) - Side effects & uses
+
+DRG-20075776

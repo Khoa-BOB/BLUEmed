@@ -54,3 +54,5 @@ models/
 .env.local
 .env.production
 .en
+
+note.txt
