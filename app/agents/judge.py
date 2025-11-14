@@ -11,5 +11,5 @@ def Judge_node(state: MedState, llm) -> MedState:
         HumanMessage(content=user_text),
     ]
     resp = llm.invoke(messages)
-    state["expert1_analysis"] = resp.content
+    state["judge_decision"] = resp.content
     return state
