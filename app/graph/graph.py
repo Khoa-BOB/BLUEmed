@@ -4,7 +4,7 @@ from app.core.state import MedState
 from app.agents.expertA import expertA_node
 from app.agents.expertB import expertB_node
 from app.agents.judge import Judge_node
-from llm.factory import build_llm # your helper
+from app.llm.factory import build_llm # your helper
 
 def build_graph(config) -> StateGraph:
     llm_expert = build_llm(model_name=config.EXPERT_MODEL)
