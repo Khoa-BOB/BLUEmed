@@ -34,7 +34,7 @@ dist/
 .tox/
 .nox/
 .cache/
-pytest_cache/
+.pytest_cache/
 
 # --- IDE & editors ---
 .vscode/
@@ -58,3 +58,4 @@ models/
 note.txt
 
 chroma_db/
+

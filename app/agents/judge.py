@@ -2,7 +2,7 @@ from app.core.state import MedState
 from app.core.prompts import JUDGE_SYSTEM
 from langchain_core.messages import SystemMessage, HumanMessage
 
-def Judge_node(state: MedState, llm) -> MedState:
+def Judge_node(state: MedState, llm) -> dict:
     user_text = state["messages"][-1].content
     context = state["retrieved_context"]
 
@@ -11,5 +11,4 @@ def Judge_node(state: MedState, llm) -> MedState:
         HumanMessage(content=user_text),
     ]
     resp = llm.invoke(messages)
-    state["judge_decision"] = resp.content
-    return state
+    return {"judge_decision": resp.content}

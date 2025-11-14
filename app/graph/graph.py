@@ -1,4 +1,4 @@
-from langgraph.graph import StateGraph, END
+from langgraph.graph import StateGraph,START, END
 from app.core.state import MedState
 # from app.rag.retrieve_node import retrieve_node, init_retriever
 from app.agents.expertA import expertA_node
@@ -21,11 +21,10 @@ def build_graph(config) -> StateGraph:
     builder.add_node("expertB", partial(expertB_node, llm=llm_expert))
     builder.add_node("judge", partial(Judge_node, llm=llm_judge))
 
-    builder.set_entry_point("retrieve")
-    builder.add_edge("retrieve", "expert1")
-    builder.add_edge("retrieve", "expert2")
-    builder.add_edge("expert1", "judge")
-    builder.add_edge("expert2", "judge")
+    builder.add_edge(START, "expertA")
+    builder.add_edge(START, "expertB")
+    builder.add_edge("expertA", "judge")
+    builder.add_edge("expertB", "judge")
     builder.add_edge("judge", END)
 
     return builder.compile()

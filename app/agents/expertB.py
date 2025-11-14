@@ -2,7 +2,7 @@ from app.core.state import MedState
 from app.core.prompts import EXPERT_B_SYSTEM
 from langchain_core.messages import SystemMessage, HumanMessage
 
-def expertB_node(state: MedState, llm) -> MedState:
+def expertB_node(state: MedState, llm) -> dict:
     user_text = state["messages"][-1].content
     context = state["retrieved_context"]
 
@@ -11,5 +11,4 @@ def expertB_node(state: MedState, llm) -> MedState:
         HumanMessage(content=user_text),
     ]
     resp = llm.invoke(messages)
-    state["expert2_analysis"] = resp.content
-    return state
+    return {"expert2_analysis": resp.content}
