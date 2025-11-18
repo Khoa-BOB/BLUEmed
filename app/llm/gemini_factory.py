@@ -2,6 +2,7 @@
 Google Gemini API LLM factory.
 """
 from langchain_google_genai import ChatGoogleGenerativeAI
+from config.settings import settings
 import os
 
 
@@ -24,7 +25,7 @@ def build_gemini_llm(model_name: str = "gemini-2.0-flash", temperature: float = 
         2. Set in .env: GOOGLE_API_KEY=your_key_here
     """
 
-    api_key = os.getenv("GOOGLE_API_KEY")
+    api_key = settings.GOOGLE_API_KEY
     if not api_key:
         raise ValueError(
             "GOOGLE_API_KEY not found in environment. "
