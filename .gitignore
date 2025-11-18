@@ -58,5 +58,16 @@ models/
 note.txt
 
 chroma_db/
+vectordb
 
 project_idea
+
+test_debate.py
+test_drug_alcohol.py
+test_new_scenario.py
+
+scripts/
+
+app/rag
+DEBATE_SYSTEM.md
+GEMINI_SETUP.md
