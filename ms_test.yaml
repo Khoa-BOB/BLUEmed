@@ -1,0 +1,20 @@
+ms_example:
+text_id: ms-val-0
+error_flag: 1
+error_type: causalOrganism
+error_sentence_id: 5
+error_sentence: Culture tests indicate Neisseria gonorrhoeae.
+corrected_sentence: Culture tests indicate Trichomonas vaginalis.
+text:
+  A 24-year-old woman comes to the emergency department because of a 4-hour history of headaches, nausea, and vomiting. During this time, she has also had recurrent dizziness and palpitations. The symptoms started while she was at a friend's birthday party, where she had one beer. One week ago, the patient was diagnosed with a genitourinary infection and started on antimicrobial therapy. She has no history of major medical illness. Culture tests indicate Neisseria gonorrhoeae. Her pulse is 106/min and blood pressure is 102/73 mm Hg. Physical examination shows facial flushing and profuse sweating.
+sentences:
+- A 24-year-old woman comes to the emergency department because of a 4- hour history of headaches, nausea, and vomiting.
+- During this time, she has also had recurrent dizziness and palpitations.
+- The symptoms started while she was at a friend's birthday party, where she had one beer.
+- One week ago, the patient was diagnosed with a genitourinary infection and started on antimicrobial therapy.
+- She has no history of major medical illness.
+- Culture tests indicate Neisseria gonorrhoeae.
+- Her pulse is 106/min and blood pressure is 102/73 mmHg.
+- Physical examination shows facial flushing and profuse sweating.
+corrected_text:
+  A 24-year-old woman comes to the emergency department because of a 4-hour history of headaches, nausea, and vomiting. During this time, she has also had recurrent dizziness and palpitations. The symptoms started while she was at a friend's birthday party, where she had one beer. One week ago, the patient was diagnosed with a genitourinary infection and started on antimicrobial therapy. She has no history of major medical illness. Culture tests indicate Trichomonas vaginalis. Her pulse is 106/min and blood pressure is 102/73 mm Hg. Physical examination shows facial flushing and profuse sweating.
