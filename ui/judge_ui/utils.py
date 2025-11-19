@@ -1,62 +1,100 @@
-from typing import List, Dict, Any
+from typing import Dict, Any
 
 
-def parse_list_from_textarea(text: str, sep: str = ",") -> List[str]:
-    if not text:
-        return []
-    raw = [t.strip() for t in text.split(sep)]
-    return [t for t in raw if t]
-
-
-def _lines(items: List[str]) -> str:
-    return "".join([f"- {it}\n" for it in items]) if items else "- (none)\n"
-
-
-def generate_markdown_report(req: Dict[str, Any], resp: Dict[str, Any]) -> str:
-    case = req["case"]
-    spec = req["specialist"]
-    verdict = resp["verdict"]
-
+def generate_markdown_report(resp_data: Dict[str, Any]) -> str:
+    """Generate a formatted markdown report from the debate response."""
+    
     md = []
-    md.append(f"# BLUEmed Judge Report — Case {case['case_id']}\n")
-    md.append("## Verdict\n")
-    md.append(f"- Decision: {verdict['verdict']}\n")
-    md.append(f"- Confidence: {verdict['confidence']:.2f}\n\n")
-
-    md.append("## Patient Case\n")
-    md.append(f"- Age: {case['age']}\n")
-    md.append(f"- Sex: {case['sex']}\n")
-    md.append(f"- Duration: {case.get('duration') or '(unspecified)'}\n")
-    md.append("### Symptoms\n")
-    md.append(_lines(case.get("symptoms", [])))
-    md.append("\n")
-    md.append("### Clinical Notes\n")
-    md.append(f"{case.get('notes') or '(none)'}\n\n")
-
-    md.append("## Specialist Assessment\n")
-    md.append(f"- Provisional diagnosis: {spec['provisional_diagnosis']}\n")
-    md.append(f"- ICD-10: {spec.get('icd10') or '(none)'}\n")
-    md.append("### Differential diagnoses\n")
-    md.append(_lines(spec.get("differential", [])))
-    md.append("\n")
-    md.append("### Rationale\n")
-    md.append(f"{spec.get('rationale') or '(none)'}\n\n")
-
-    md.append("## Judge Rationale\n")
-    md.append(f"{verdict.get('critique') or ''}\n\n")
-    if verdict.get("key_points"):
-        md.append("### Key Points\n")
-        md.append(_lines(verdict["key_points"]))
+    
+    # Header
+    md.append(f"# BLUEmed Debate Analysis Report\n")
+    md.append(f"**Request ID:** {resp_data['request_id']}\n")
+    md.append("---\n\n")
+    
+    # Medical Note
+    md.append("## 📋 Medical Note\n")
+    md.append(f"{resp_data['medical_note']}\n\n")
+    md.append("---\n\n")
+    
+    # Round 1
+    md.append("## 🥊 Round 1: Initial Arguments\n\n")
+    
+    # Expert A Round 1
+    if resp_data.get("expertA_arguments") and len(resp_data["expertA_arguments"]) > 0:
+        arg = resp_data["expertA_arguments"][0]
+        md.append("### 👨‍⚕️ Expert A (Mayo Clinic)\n")
+        md.append(f"**Round {arg['round']}**\n\n")
+        md.append(f"{arg['content']}\n\n")
+        
+        # Add sources if available
+        if resp_data.get("expertA_retrieved_docs"):
+            md.append("**Sources:**\n")
+            for i, doc in enumerate(resp_data["expertA_retrieved_docs"], 1):
+                md.append(f"{i}. {doc[:200]}...\n")
+            md.append("\n")
+    
+    # Expert B Round 1
+    if resp_data.get("expertB_arguments") and len(resp_data["expertB_arguments"]) > 0:
+        arg = resp_data["expertB_arguments"][0]
+        md.append("### 👩‍⚕️ Expert B (WebMD)\n")
+        md.append(f"**Round {arg['round']}**\n\n")
+        md.append(f"{arg['content']}\n\n")
+        
+        # Add sources if available
+        if resp_data.get("expertB_retrieved_docs"):
+            md.append("**Sources:**\n")
+            for i, doc in enumerate(resp_data["expertB_retrieved_docs"], 1):
+                md.append(f"{i}. {doc[:200]}...\n")
+            md.append("\n")
+    
+    md.append("---\n\n")
+    
+    # Round 2
+    md.append("## 🥊 Round 2: Counter-Arguments\n\n")
+    
+    # Expert A Round 2
+    if resp_data.get("expertA_arguments") and len(resp_data["expertA_arguments"]) > 1:
+        arg = resp_data["expertA_arguments"][1]
+        md.append("### 👨‍⚕️ Expert A (Mayo Clinic)\n")
+        md.append(f"**Round {arg['round']}**\n\n")
+        md.append(f"{arg['content']}\n\n")
+    
+    # Expert B Round 2
+    if resp_data.get("expertB_arguments") and len(resp_data["expertB_arguments"]) > 1:
+        arg = resp_data["expertB_arguments"][1]
+        md.append("### 👩‍⚕️ Expert B (WebMD)\n")
+        md.append(f"**Round {arg['round']}**\n\n")
+        md.append(f"{arg['content']}\n\n")
+    
+    md.append("---\n\n")
+    
+    # Judge Decision
+    md.append("## 🏛️ Judge's Final Decision\n\n")
+    
+    if resp_data.get("judge_decision"):
+        decision = resp_data["judge_decision"]
+        
+        final_answer = decision.get("final_answer", "UNKNOWN")
+        icon = "✅" if final_answer == "CORRECT" else "❌" if final_answer == "INCORRECT" else "❓"
+        
+        md.append(f"### {icon} Final Answer: **{final_answer}**\n\n")
+        
+        if decision.get("confidence_score"):
+            md.append(f"**Confidence Score:** {decision['confidence_score']}/10\n\n")
+        
+        if decision.get("winner"):
+            md.append(f"**Winner:** {decision['winner']}\n\n")
+        
+        md.append("### 📝 Reasoning\n\n")
+        md.append(f"{decision.get('reasoning', 'No reasoning provided.')}\n\n")
+    
+    md.append("---\n\n")
+    
+    # Model Info
+    if resp_data.get("model_info"):
+        md.append("## ℹ️ System Information\n\n")
+        for key, value in resp_data["model_info"].items():
+            md.append(f"- **{key.title()}:** {value}\n")
         md.append("\n")
-    if verdict.get("alignment_scores"):
-        md.append("### Alignment Scores\n")
-        for src, score in verdict["alignment_scores"].items():
-            md.append(f"- {src}: {score:.2f}\n")
-        md.append("\n")
-    if verdict.get("citations"):
-        md.append("### Citations\n")
-        for c in verdict["citations"]:
-            md.append(f"- {c}\n")
-        md.append("\n")
-
+    
     return "".join(md)

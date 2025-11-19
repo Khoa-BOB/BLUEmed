@@ -71,3 +71,6 @@ scripts/
 app/rag
 DEBATE_SYSTEM.md
 GEMINI_SETUP.md
+
+# --- Misc ---
+context/
