@@ -199,7 +199,8 @@ class SmartMedicalRetriever:
         note: str,
         expert: str,
         k_per_query: int = 2,
-        max_total: int = 5
+        max_total: int = 5,
+        filter_category: str = None
     ) -> List[str]:
         """
         Retrieve documents using query decomposition.
@@ -209,6 +210,8 @@ class SmartMedicalRetriever:
             expert: "A" for Mayo Clinic, "B" for WebMD
             k_per_query: Documents to retrieve per query
             max_total: Maximum total documents to return
+            filter_category: Optional category filter
+                           ("drugs_supplements", "diseases_conditions", "symptoms")
 
         Returns:
             List of relevant document texts (deduplicated)
@@ -216,7 +219,9 @@ class SmartMedicalRetriever:
         # Decompose into focused queries
         queries = self.decompose_query(note)
 
-        print(f"\n[Smart Retriever] Decomposed into {len(queries)} queries:")
+        expert_name = "Mayo Clinic" if expert == "A" else "WebMD"
+        filter_msg = f" (filtered: {filter_category})" if filter_category else ""
+        print(f"\n[Smart Retriever - {expert_name}] Decomposed into {len(queries)} queries{filter_msg}:")
         for i, q in enumerate(queries[:5], 1):  # Show first 5
             print(f"  {i}. {q[:80]}...")
 
@@ -228,7 +233,8 @@ class SmartMedicalRetriever:
             docs = self.base_retriever.retrieve_for_expert(
                 query=query,
                 expert=expert,
-                k=k_per_query
+                k=k_per_query,
+                filter_category=filter_category
             )
 
             # Deduplicate based on content
@@ -246,7 +252,7 @@ class SmartMedicalRetriever:
             if len(all_docs) >= max_total:
                 break
 
-        print(f"[Smart Retriever] Retrieved {len(all_docs)} unique documents\n")
+        print(f"[Smart Retriever - {expert_name}] Retrieved {len(all_docs)} unique documents\n")
         return all_docs[:max_total]
 
 
@@ -254,11 +260,32 @@ class SmartMedicalRetriever:
 _smart_retriever = None
 
 
-def get_smart_retriever(persist_dir: str = "vectordb") -> SmartMedicalRetriever:
-    """Get or create global smart retriever instance."""
+def get_smart_retriever(
+    persist_dir: str = None,
+    embedding_model: str = None,
+    auto_build: bool = True,
+    data_dir: str = "BlueMed_data"
+) -> SmartMedicalRetriever:
+    """
+    Get or create global smart retriever instance.
+
+    Args:
+        persist_dir: Directory containing vector databases
+        embedding_model: Embedding model to use
+        auto_build: If True, automatically build databases if they don't exist
+        data_dir: Directory containing source documents
+
+    Returns:
+        SmartMedicalRetriever instance
+    """
     global _smart_retriever
     if _smart_retriever is None:
         from app.rag.chroma_retriever import get_retriever
-        base_retriever = get_retriever(persist_dir)
+        base_retriever = get_retriever(
+            persist_dir=persist_dir,
+            embedding_model=embedding_model,
+            auto_build=auto_build,
+            data_dir=data_dir
+        )
         _smart_retriever = SmartMedicalRetriever(base_retriever)
     return _smart_retriever
