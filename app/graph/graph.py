@@ -69,4 +69,5 @@ def build_graph(config) -> StateGraph:
 
     builder.add_edge("judge", END)
 
+    # Compile without checkpointing (results saved as markdown logs instead)
     return builder.compile()

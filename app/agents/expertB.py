@@ -41,7 +41,9 @@ def expertB_node(state: MedState, llm) -> dict:
     if retrieved_docs:
         prompt_parts.append("\n=== Retrieved WebMD Knowledge ===")
         for i, doc in enumerate(retrieved_docs, 1):
-            prompt_parts.append(f"\nSource {i}:\n{doc}\n")
+            # Extract content from Document object
+            content = doc.page_content if hasattr(doc, 'page_content') else str(doc)
+            prompt_parts.append(f"\nSource {i}:\n{content}\n")
 
     # In round 2, include Expert A's round 1 argument
     if current_round == 2 and state["expertA_arguments"]:

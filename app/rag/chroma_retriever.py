@@ -118,7 +118,7 @@ class MedicalKnowledgeRetriever:
         query: str,
         k: int = 3,
         filter_category: str = None
-    ) -> List[str]:
+    ) -> List:
         """
         Retrieve from Mayo Clinic knowledge base.
 
@@ -129,10 +129,11 @@ class MedicalKnowledgeRetriever:
                            ("drugs_supplements", "diseases_conditions", "symptoms")
 
         Returns:
-            List of relevant document texts
+            List of relevant documents with metadata
         """
         if self.mayo_db is None:
-            return ["Mayo Clinic knowledge base not available."]
+            from langchain_core.documents import Document
+            return [Document(page_content="Mayo Clinic knowledge base not available.")]
 
         # Build metadata filter if specified
         filter_dict = None
@@ -140,14 +141,14 @@ class MedicalKnowledgeRetriever:
             filter_dict = {"category": filter_category}
 
         docs = self.mayo_db.similarity_search(query, k=k, filter=filter_dict)
-        return [doc.page_content for doc in docs]
+        return docs
 
     def retrieve_webmd(
         self,
         query: str,
         k: int = 3,
         filter_category: str = None
-    ) -> List[str]:
+    ) -> List:
         """
         Retrieve from WebMD knowledge base.
 
@@ -158,10 +159,11 @@ class MedicalKnowledgeRetriever:
                            ("drugs_supplements", "diseases_conditions")
 
         Returns:
-            List of relevant document texts
+            List of relevant documents with metadata
         """
         if self.webmd_db is None:
-            return ["WebMD knowledge base not available."]
+            from langchain_core.documents import Document
+            return [Document(page_content="WebMD knowledge base not available.")]
 
         # Build metadata filter if specified
         filter_dict = None
@@ -169,7 +171,7 @@ class MedicalKnowledgeRetriever:
             filter_dict = {"category": filter_category}
 
         docs = self.webmd_db.similarity_search(query, k=k, filter=filter_dict)
-        return [doc.page_content for doc in docs]
+        return docs
 
     def retrieve_for_expert(
         self,
@@ -177,7 +179,7 @@ class MedicalKnowledgeRetriever:
         expert: str,
         k: int = 3,
         filter_category: str = None
-    ) -> List[str]:
+    ) -> List:
         """
         Retrieve knowledge for a specific expert.
 
@@ -189,7 +191,7 @@ class MedicalKnowledgeRetriever:
                            ("drugs_supplements", "diseases_conditions", "symptoms")
 
         Returns:
-            List of relevant documents
+            List of relevant documents with metadata
         """
         if expert == "A":
             return self.retrieve_mayo(query, k, filter_category)

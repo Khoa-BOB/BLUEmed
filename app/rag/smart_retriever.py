@@ -201,7 +201,7 @@ class SmartMedicalRetriever:
         k_per_query: int = 2,
         max_total: int = 5,
         filter_category: str = None
-    ) -> List[str]:
+    ) -> List:
         """
         Retrieve documents using query decomposition.
 
@@ -214,7 +214,7 @@ class SmartMedicalRetriever:
                            ("drugs_supplements", "diseases_conditions", "symptoms")
 
         Returns:
-            List of relevant document texts (deduplicated)
+            List of relevant documents with metadata (deduplicated)
         """
         # Decompose into focused queries
         queries = self.decompose_query(note)
@@ -240,7 +240,8 @@ class SmartMedicalRetriever:
             # Deduplicate based on content
             for doc in docs:
                 # Use first 200 chars as fingerprint
-                fingerprint = doc[:200].strip()
+                content = doc.page_content if hasattr(doc, 'page_content') else str(doc)
+                fingerprint = content[:200].strip()
                 if fingerprint not in seen_contents:
                     seen_contents.add(fingerprint)
                     all_docs.append(doc)

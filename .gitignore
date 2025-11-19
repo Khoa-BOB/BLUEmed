@@ -23,6 +23,7 @@ env.bak/
 *.log
 *.sqlite3
 *.db
+logs/
 
 # --- PyInstaller / build ---
 build/
@@ -70,7 +71,10 @@ scripts/
 
 DEBATE_SYSTEM.md
 GEMINI_SETUP.md
+LOGGING.md
 
 # --- Misc ---
 context/
 BlueMed_data
+
+midterm_report
