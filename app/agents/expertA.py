@@ -16,14 +16,20 @@ def expertA_node(state: MedState, llm) -> dict:
 
     # Get smart retriever and fetch Mayo Clinic knowledge with query decomposition
     # Toggle via .env: USE_RETRIEVER=True or False
+    # Optimization: Only retrieve in round 1, reuse documents in round 2
     if settings.USE_RETRIEVER:
-        smart_retriever = get_smart_retriever()
-        retrieved_docs = smart_retriever.retrieve_with_decomposition(
-            note=medical_note,
-            expert="A",
-            k_per_query=2,
-            max_total=5
-        )
+        if current_round == 1:
+            # Round 1: Perform retrieval
+            smart_retriever = get_smart_retriever()
+            retrieved_docs = smart_retriever.retrieve_with_decomposition(
+                note=medical_note,
+                expert="A",
+                k_per_query=2,
+                max_total=5
+            )
+        else:
+            # Round 2+: Reuse documents from state
+            retrieved_docs = state.get("expertA_retrieved_docs", [])
     else:
         # No retrieval - experts rely on their training only
         retrieved_docs = []

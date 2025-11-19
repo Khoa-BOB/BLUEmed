@@ -30,6 +30,13 @@ def build_graph(config) -> StateGraph:
     3. Round 2: Both experts provide counter-arguments (parallel)
     4. Judge evaluates all arguments and makes final decision
     """
+    # Pre-initialize retriever to avoid race conditions when experts run in parallel
+    if config.USE_RETRIEVER:
+        from app.rag.smart_retriever import get_smart_retriever
+        print("Initializing retriever...")
+        get_smart_retriever()  # Initialize singleton before parallel execution
+        print()
+
     llm_expert = build_llm(model_name=config.EXPERT_MODEL)
     llm_judge = build_llm(model_name=config.JUDGE_MODEL)
 

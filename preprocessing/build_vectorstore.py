@@ -16,7 +16,7 @@ Usage:
 import os
 import pathlib
 
-from langchain_ollama import OllamaEmbeddings
+from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from langchain_chroma import Chroma
 
 from load_documents import discover_paths, load_documents_from_paths
@@ -25,8 +25,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 # Configuration
-EMBEDDING_MODEL = os.getenv("EMBEDDING_MODEL", "llama2")
-OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
+EMBEDDING_MODEL = os.getenv("EMBEDDING_MODEL", "models/text-embedding-004")
 
 
 def initialize_vectorstore(
@@ -39,10 +38,7 @@ def initialize_vectorstore(
     print("Initializing vector store...")
     print(EMBEDDING_MODEL)
     # Embeddings
-    embeddings = OllamaEmbeddings(
-        model=EMBEDDING_MODEL,
-        base_url=OLLAMA_BASE_URL
-    )
+    embeddings = GoogleGenerativeAIEmbeddings(model=EMBEDDING_MODEL)
 
     # Reuse an exsisting DB
     if reuse_if_exists and pathlib.Path(persist_dir).exists():
