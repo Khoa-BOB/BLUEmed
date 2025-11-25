@@ -145,6 +145,8 @@ class SmartMedicalRetriever:
         """
         Decompose medical note into focused queries.
 
+        Enhanced to include differential diagnosis queries for better error detection.
+
         Args:
             note: Medical note text
 
@@ -152,9 +154,7 @@ class SmartMedicalRetriever:
             List of focused query strings
         """
         queries = []
-
-        # Always include the full note as one query (but lower priority)
-        queries.append(note[:500])  # Truncate to avoid too long
+        note_lower = note.lower()
 
         # Extract entities
         diagnoses = self.extract_diagnosis(note)
@@ -162,35 +162,61 @@ class SmartMedicalRetriever:
         medications = self.extract_medications(note)
         contexts = self.extract_context_clues(note)
 
-        # Query 1: Diagnosis + treatment
+        # Detect travel history
+        travel_keywords = ["travel", "returned from", "trip to", "visited", "missionary"]
+        has_travel = any(keyword in note_lower for keyword in travel_keywords)
+
+        # Detect suspected/uncertain diagnosis
+        is_suspected = "suspected" in note_lower or "suspect" in note_lower
+
+        # Priority 1: Differential diagnosis queries (MOST IMPORTANT for error detection)
         if diagnoses:
-            for diagnosis in diagnoses[:2]:  # Top 2 diagnoses
-                queries.append(f"{diagnosis} treatment guidelines medications")
-
-        # Query 2: Diagnosis + context (e.g., "gonorrhea alcohol")
-        if diagnoses and contexts:
             for diagnosis in diagnoses[:1]:  # Primary diagnosis
-                for context in contexts[:2]:  # Top 2 contexts
-                    queries.append(f"{diagnosis} {context} contraindications")
+                # Query for differential diagnosis
+                queries.append(f"{diagnosis} differential diagnosis similar conditions")
 
-        # Query 3: Symptoms cluster
+                # Query for when NOT to diagnose this
+                if is_suspected:
+                    queries.append(f"when to suspect {diagnosis} versus alternatives")
+
+                # Query for typical presentation
+                queries.append(f"{diagnosis} typical symptoms presentation characteristics")
+
+        # Priority 2: Symptom-based differential (especially with travel)
         if symptoms:
-            symptom_cluster = " ".join(symptoms[:5])  # Top 5 symptoms
+            symptom_cluster = " ".join(symptoms[:4])  # Top 4 symptoms
             queries.append(f"{symptom_cluster} causes differential diagnosis")
 
-        # Query 4: Medication + context
+            # Travel-related infections
+            if has_travel and diagnoses:
+                queries.append(f"travel infections {symptom_cluster} differential {diagnoses[0]}")
+            elif has_travel:
+                queries.append(f"travel related infections {symptom_cluster}")
+
+        # Priority 3: Diagnosis-specific features (to verify match)
+        if diagnoses and symptoms:
+            diagnosis = diagnoses[0]
+            # Check if key symptoms match the diagnosis
+            queries.append(f"{diagnosis} does it cause {' '.join(symptoms[:3])}")
+
+        # Priority 4: Context-specific contraindications
+        if diagnoses and contexts:
+            for diagnosis in diagnoses[:1]:
+                for context in contexts[:1]:  # Most important context only
+                    queries.append(f"{diagnosis} {context} contraindications complications")
+
+        # Priority 5: Medication interactions (if medications mentioned)
         if medications and contexts:
             for med in medications[:1]:
-                for context in contexts[:2]:
-                    queries.append(f"{med} {context} interaction adverse effects")
+                for context in contexts[:1]:
+                    queries.append(f"{med} {context} interaction contraindications")
 
-        # Query 5: Context-specific guidelines
-        if contexts:
-            for context in contexts[:2]:
-                if diagnoses:
-                    queries.append(f"{context} {diagnoses[0]} management")
-                elif medications:
-                    queries.append(f"{context} {medications[0]} safety")
+        # Priority 6: Treatment guidelines (lower priority)
+        if diagnoses:
+            queries.append(f"{diagnoses[0]} treatment guidelines")
+
+        # Always include full note as fallback (lowest priority)
+        queries.append(note[:500])
 
         return queries
 

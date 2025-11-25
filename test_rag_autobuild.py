@@ -53,7 +53,7 @@ print("Expert A (Mayo Clinic) Results:")
 print("-" * 60)
 mayo_results = retriever.retrieve_mayo(test_query, k=2)
 for i, doc in enumerate(mayo_results, 1):
-    print(f"{i}. {doc[:200]}...")
+    print(f"{i}. {doc.page_content[:200]}...")
     print()
 
 # Test WebMD retrieval (Expert B)
@@ -61,7 +61,7 @@ print("Expert B (WebMD) Results:")
 print("-" * 60)
 webmd_results = retriever.retrieve_webmd(test_query, k=2)
 for i, doc in enumerate(webmd_results, 1):
-    print(f"{i}. {doc[:200]}...")
+    print(f"{i}. {doc.page_content[:200]}...")
     print()
 
 print("="*60)
