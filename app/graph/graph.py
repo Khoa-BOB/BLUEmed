@@ -11,7 +11,38 @@ def increment_round(state: MedState) -> dict:
     """Increment the debate round counter."""
     return {"current_round": state["current_round"] + 1}
 
+def check_round1_consensus(state: MedState) -> str:
+    """
+    Check if experts agree in Round 1.
+    If they agree, skip Round 2 and go straight to judge.
+    If they disagree, continue to Round 2 for debate.
+    """
+    if state["current_round"] == 1:
+        # Check if both experts have made their arguments
+        expertA_args = state.get("expertA_arguments", [])
+        expertB_args = state.get("expertB_arguments", [])
 
+        if expertA_args and expertB_args:
+            # Extract classifications from Round 1
+            argA = expertA_args[0]["content"].upper()
+            argB = expertB_args[0]["content"].upper()
+
+            # Simple consensus check
+            a_says_incorrect = "INCORRECT" in argA and "Based on my analysis, this note is INCORRECT" in argA
+            b_says_incorrect = "INCORRECT" in argB and "Based on my analysis, this note is INCORRECT" in argB
+
+            # If both agree, skip Round 2
+            if (a_says_incorrect and b_says_incorrect) or \
+               (not a_says_incorrect and not b_says_incorrect):
+                print("\n✓ Round 1 Consensus Detected - Skipping Round 2")
+                return "judge"
+
+    # Otherwise continue to Round 2
+    if state["current_round"] >= state["max_rounds"]:
+        return "judge"
+    else:
+        return "continue"
+    
 def should_continue_debate(state: MedState) -> str:
     """Decide whether to continue debate or move to judge."""
     if state["current_round"] >= state["max_rounds"]:
@@ -38,7 +69,7 @@ def build_graph(config) -> StateGraph:
         print()
 
     llm_expert = build_llm(model_name=config.EXPERT_MODEL)
-    llm_judge = build_llm(model_name=config.JUDGE_MODEL)
+    llm_judge = build_llm(model_name=config.JUDGE_MODEL, temperature=0.1)
 
     builder = StateGraph(MedState)
 
@@ -49,17 +80,25 @@ def build_graph(config) -> StateGraph:
     builder.add_node("expertA_round2", partial(expertA_node, llm=llm_expert))
     builder.add_node("expertB_round2", partial(expertB_node, llm=llm_expert))
     builder.add_node("judge", partial(Judge_node, llm=llm_judge))
-
+    builder.add_node("consensus_check", lambda state: state) 
     # Build the flow
     # Round 1: Both experts argue in parallel
     builder.add_edge(START, "expertA_round1")
     builder.add_edge(START, "expertB_round1")
 
-    # After both round 1 arguments, increment round
-    builder.add_edge("expertA_round1", "increment")
-    builder.add_edge("expertB_round1", "increment")
-
-    # Round 2: Both experts counter-argue in parallel
+    # After both round 1 arguments, check for consensus
+    builder.add_edge("expertA_round1", "consensus_check")
+    builder.add_edge("expertB_round1", "consensus_check")
+    # Gate: if both experts has consensus, go to Judge, otherwise continue to next round
+    builder.add_conditional_edges(
+        "consensus_check",
+        check_round1_consensus,
+        {
+            "judge": "judge",
+            "continue": "increment"
+        }
+    )
+    # Round 2: Both experts counter-argue in parallel if no consensus
     builder.add_edge("increment", "expertA_round2")
     builder.add_edge("increment", "expertB_round2")
 
