@@ -38,25 +38,44 @@ def Judge_node(state: MedState, llm) -> dict:
 
     resp = llm.invoke(messages)
 
-    # Try to parse JSON response
+    # Try to parse JSON response with robust multi-method extraction
+    import re
     final_answer = "UNKNOWN"
+    decision_json = {}
+
+    # Method 1: Try direct JSON parsing first
     try:
-        # Try direct JSON parsing first
         decision_json = json.loads(resp.content)
-        final_answer = decision_json.get("Final Answer", "UNKNOWN")
     except json.JSONDecodeError:
-        # Try to extract JSON from the response
-        import re
-        json_match = re.search(r'\{[^}]*"Final Answer"[^}]*\}', resp.content, re.DOTALL)
+        pass
+
+    # Method 2: Extract JSON from markdown code blocks (```json ... ```)
+    if not decision_json:
+        markdown_match = re.search(r'```(?:json)?\s*(\{.*\})\s*```', resp.content, re.DOTALL)
+        if markdown_match:
+            try:
+                decision_json = json.loads(markdown_match.group(1))
+            except json.JSONDecodeError:
+                pass
+
+    # Method 3: Greedy match for any JSON object
+    if not decision_json:
+        json_match = re.search(r'\{.*\}', resp.content, re.DOTALL)
         if json_match:
             try:
                 decision_json = json.loads(json_match.group(0))
-                final_answer = decision_json.get("Final Answer", "UNKNOWN")
             except json.JSONDecodeError:
-                # Extract directly using regex as fallback
-                answer_match = re.search(r'"Final Answer":\s*"(CORRECT|INCORRECT)"', resp.content)
-                if answer_match:
-                    final_answer = answer_match.group(1)
+                pass
+
+    # Method 4: Extract Final Answer directly using regex as last fallback
+    if not decision_json:
+        answer_match = re.search(r'"Final Answer":\s*"(CORRECT|INCORRECT)"', resp.content)
+        if answer_match:
+            final_answer = answer_match.group(1)
+
+    # Extract final_answer from parsed JSON
+    if decision_json:
+        final_answer = decision_json.get("Final Answer") or decision_json.get("final_answer") or "UNKNOWN"
 
     return {
         "judge_decision": resp.content,

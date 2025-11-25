@@ -2,6 +2,11 @@ from app.core.state import MedState, DebateArgument
 from app.core.prompts import EXPERT_B_SYSTEM
 from langchain_core.messages import SystemMessage, HumanMessage
 from app.rag.smart_retriever import get_smart_retriever
+from app.rag.metadata_filter import (
+    determine_retrieval_strategy,
+    get_category_split,
+    format_retrieval_summary
+)
 from config.settings import settings
 
 
@@ -9,24 +14,54 @@ def expertB_node(state: MedState, llm) -> dict:
     """
     Expert B node with WebMD access for debate system.
     Generates arguments in rounds, can see Expert A's previous arguments.
-    Uses smart retriever with query decomposition (if settings.USE_RETRIEVER=True).
+    Uses smart retriever with hybrid metadata filtering and query decomposition.
     """
     current_round = state["current_round"]
     medical_note = state["medical_note"]
 
-    # Get smart retriever and fetch WebMD knowledge with query decomposition
+    # Get smart retriever and fetch WebMD knowledge with hybrid metadata filtering
     # Toggle via .env: USE_RETRIEVER=True or False
     # Optimization: Only retrieve in round 1, reuse documents in round 2
     if settings.USE_RETRIEVER:
         if current_round == 1:
-            # Round 1: Perform retrieval
+            # Round 1: Perform retrieval with hybrid metadata filtering
             smart_retriever = get_smart_retriever()
-            retrieved_docs = smart_retriever.retrieve_with_decomposition(
-                note=medical_note,
-                expert="B",
-                k_per_query=2,
-                max_total=5
-            )
+
+            # Determine optimal retrieval strategy based on note content
+            primary_cat, secondary_cat = determine_retrieval_strategy(medical_note)
+            k_per_query, primary_max, secondary_max = get_category_split(secondary_cat is not None)
+
+            # Log retrieval strategy
+            print(f"\n[Expert B] {format_retrieval_summary(primary_cat, secondary_cat, primary_max, secondary_max)}")
+
+            if secondary_cat:
+                # Multi-category retrieval: Get from both primary and secondary categories
+                primary_docs = smart_retriever.retrieve_with_decomposition(
+                    note=medical_note,
+                    expert="B",
+                    k_per_query=k_per_query,
+                    max_total=primary_max,
+                    filter_category=primary_cat
+                )
+
+                secondary_docs = smart_retriever.retrieve_with_decomposition(
+                    note=medical_note,
+                    expert="B",
+                    k_per_query=k_per_query,
+                    max_total=secondary_max,
+                    filter_category=secondary_cat
+                )
+
+                retrieved_docs = primary_docs + secondary_docs
+            else:
+                # Single-category retrieval: Full depth in one category
+                retrieved_docs = smart_retriever.retrieve_with_decomposition(
+                    note=medical_note,
+                    expert="B",
+                    k_per_query=k_per_query,
+                    max_total=primary_max,
+                    filter_category=primary_cat
+                )
         else:
             # Round 2+: Reuse documents from state
             retrieved_docs = state.get("expertB_retrieved_docs", [])
