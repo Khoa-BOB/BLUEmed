@@ -6,7 +6,7 @@ from config.settings import settings
 import os
 
 
-def build_gemini_llm(model_name: str = "gemini-2.0-flash", temperature: float = 0.7):
+def build_gemini_llm(model_name: str = "gemini-2.0-flash", temperature: float = 0.2):
     """
     Build Google Gemini LLM.
 

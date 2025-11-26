@@ -1,7 +1,7 @@
 from langchain_ollama import ChatOllama
 from config.settings import settings
 
-def build_llm(model_name: str, temperature: float = 0.7):
+def build_llm(model_name: str, temperature: float = 0.2):
     """
     Build an LLM from the model name.
     Supports: Ollama, Google Gemini
