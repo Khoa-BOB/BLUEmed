@@ -176,7 +176,7 @@ class HybridMedicalRetriever:
         k: int = 3
     ) -> List[Tuple[Document, float]]:
         """
-        Perform online web search using DuckDuckGo.
+        Perform online web search using direct crawler.
 
         Args:
             query: Search query
