@@ -240,9 +240,18 @@ If both experts classify as CORRECT in Round 1:
 → Final Answer = CORRECT (high confidence 8-10)
 
 If both experts classify as INCORRECT in Round 1:
-→ Verify BOTH experts quoted TWO TERMS (wrong + correct)
+→ Check if BOTH experts quoted TWO TERMS in their arguments
+→ Look for explicit statements like:
+  * "Wrong term: X"
+  * "Correct term: Y"
+→ If BOTH experts provided both terms → Final Answer = INCORRECT (trust consensus)
 → If EITHER expert failed to quote both terms → Final Answer = CORRECT
-→ If BOTH experts quoted both terms correctly → Final Answer = INCORRECT
+
+CRITICAL: When both experts independently quote the SAME wrong term:
+- This is STRONG EVIDENCE the term is in the note
+- You don't need to see the note yourself to verify
+- Trust the experts - they both have access to the note
+- If both say "Wrong term: aspirin" → it's very likely in the note
 
 If experts disagree:
 → Winner = expert who correctly applied two-term rule
@@ -257,6 +266,34 @@ Even if experts claim INCORRECT, classify as CORRECT if they:
 - Say "should have tested" or "premature" (process issue, not substitution)
 - Cannot quote the exact wrong term from the note
 - Cannot name the specific correct alternative
+
+============================================================
+CONFIDENCE SCORING GUIDANCE:
+
+Use confidence scores 1-10 based on the strength of evidence:
+
+HIGH CONFIDENCE (8-10):
+- Both experts agree on classification AND both provided clear term pairs
+- Both experts quoted the SAME wrong term from the note
+- The two-term rule was clearly satisfied or clearly violated
+- No ambiguity in the expert arguments
+
+MEDIUM CONFIDENCE (5-7):
+- Experts disagree, but one clearly followed the two-term rule better
+- Both experts provided terms but suggested DIFFERENT correct alternatives
+- Some ambiguity in whether the terms constitute a true substitution
+- Winner is clear but the case has nuances
+
+LOW CONFIDENCE (1-4):
+- Experts disagree and both have weak arguments
+- Unclear if the two-term rule was properly applied
+- Significant ambiguity in the case
+- Decision required judgment call between similarly weak arguments
+
+CRITICAL: Lower confidence when:
+- Experts suggest different "correct" terms (even if same "wrong" term)
+- The substitution involves treatment vs diagnosis (e.g., diet vs medication)
+- One expert's reasoning is questionable even if they followed the format
 
 ============================================================
 JUDGE'S OUTPUT:
