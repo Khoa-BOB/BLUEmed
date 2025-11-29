@@ -1,284 +1,340 @@
 """
-Hybrid safety layer for substitution-error classification.
+Hybrid Safety Layer (Option C v2)
+--------------------------------
+This module implements:
 
-Goal:
-- Preserve high recall for true INCORRECT notes
-- Dramatically reduce false positives caused by:
-  - process issues (missing labs, premature diagnosis)
-  - vague/uncertain reasoning
-  - hallucinated substitutions
+1. Improved substitution term extraction
+2. Improved rule-based safety checks
+3. Full hybrid predictor for LLM expert debate systems
+
+Usage:
+------
+result = hybrid_safety_predict(
+    note=note_text,
+    llm_final_classification=judge_label,
+    expert_a_content=expert_a_output,
+    expert_b_content=expert_b_output,
+    judge_content=judge_output,
+)
+
+final_label = result["final_classification"]
 """
 
 import re
 from typing import Dict, Optional, Tuple, Any
 
 
-# =========================
-# Helper: Parse expert classification + confidence
-# =========================
+# =====================================================================
+# SECTION 1 — HELPERS: PARSE CLASSIFICATION + CONFIDENCE
+# =====================================================================
 
 def parse_expert_classification(text: str) -> Optional[str]:
-    """
-    Parse expert's own final classification from their content.
+    """Extract the expert's own stated final classification."""
+    # Try multiple patterns to handle different expert response formats
+    patterns = [
+        r'FINAL CLASSIFICATION:\s*(CORRECT|INCORRECT)',  # Standard format
+        r'5\.\s*FINAL CLASSIFICATION:\s*(CORRECT|INCORRECT)',  # Numbered with label
+        r'5\.\s*(CORRECT|INCORRECT)',  # Just numbered line 5
+        r'(?:^|\n)5\.\s+(CORRECT|INCORRECT)',  # Line starting with 5.
+    ]
 
-    Looks for:
-      FINAL CLASSIFICATION: CORRECT
-      FINAL CLASSIFICATION: INCORRECT
-    """
-    m = re.search(r'FINAL CLASSIFICATION:\s*(CORRECT|INCORRECT)', text, re.IGNORECASE)
-    if not m:
-        return None
-    return m.group(1).upper()
-
-
-def extract_confidence_from_text(text: str) -> Optional[str]:
-    """
-    Extract confidence level from expert arguments.
-
-    Returns:
-        "HIGH", "MEDIUM", "LOW", or None if not found
-    """
-    text_upper = text.upper()
-
-    if re.search(r'CONFIDENCE:\s*HIGH', text_upper):
-        return "HIGH"
-    elif re.search(r'CONFIDENCE:\s*MEDIUM', text_upper):
-        return "MEDIUM"
-    elif re.search(r'CONFIDENCE:\s*LOW', text_upper):
-        return "LOW"
+    for pattern in patterns:
+        m = re.search(pattern, text, re.IGNORECASE | re.MULTILINE)
+        if m:
+            return m.group(1).upper()
 
     return None
 
 
-# =========================
-# Helper: Extract wrong/correct term pairs
-# =========================
+def extract_confidence_from_text(text: str) -> Optional[str]:
+    """
+    Extract confidence level (HIGH, MEDIUM, LOW) or percentage.
+    Handles multiple formats:
+    - CONFIDENCE: HIGH
+    - CONFIDENCE: 90%
+    - 6. CONFIDENCE: 10
+    - 6. 90%
+    """
+    text_u = text.upper()
+
+    # literal labels
+    if "CONFIDENCE:" in text_u:
+        if "HIGH" in text_u:
+            return "HIGH"
+        if "MEDIUM" in text_u:
+            return "MEDIUM"
+        if "LOW" in text_u:
+            return "LOW"
+
+    # percentage-based with CONFIDENCE: label
+    m = re.search(r'CONFIDENCE:\s*(\d+)\s*%?', text_u)
+    if m:
+        val = int(m.group(1))
+        if val >= 90:
+            return "HIGH"
+        elif val >= 70:
+            return "MEDIUM"
+        else:
+            return "LOW"
+
+    # percentage at line 6 (Expert B format: "6. 90%" or "6. 10")
+    m = re.search(r'6\.\s*(\d+)\s*%?', text_u)
+    if m:
+        val = int(m.group(1))
+        # If it's a score out of 10, convert to percentage
+        if val <= 10:
+            val = val * 10
+        if val >= 90:
+            return "HIGH"
+        elif val >= 70:
+            return "MEDIUM"
+        else:
+            return "LOW"
+
+    return None
+
+
+# =====================================================================
+# SECTION 2 — IMPROVED SUBSTITUTION TERM EXTRACTION
+# =====================================================================
+
+CANONICAL_SUBSTITUTIONS = {
+    "pseudoseizures": "seizures",
+    "pseudo-seizures": "seizures",
+    "pseudo seizure": "seizure",
+    "pseudo seizures": "seizures",
+    # add more canonical pairs here...
+}
+
 
 def extract_substitution_terms(text: str) -> Tuple[Optional[str], Optional[str]]:
     """
-    Try to extract (wrong_term, correct_term) from an expert's explanation.
-
-    We rely on patterns like:
-      "The note states: "X""
-      "The note says: "X""
-      "This should be: "Y""
-      "The correct term is: "Y""
-      "This should instead be: "Y""
-
-    Returns:
-        (wrong_term, correct_term) or (None, None) if not found
+    Extract explicit wrong_term and correct_term pairs from expert content.
+    Handles both straight quotes and smart/curly quotes.
     """
-    # Normalize quotes a bit
-    cleaned = text.replace("“", "\"").replace("”", "\"")
 
-    # WRONG term patterns
+    # Normalize all quote types to straight quotes for consistent matching
+    cleaned = (
+        text.replace(""", "\"")
+            .replace(""", "\"")
+            .replace("'", "'")
+            .replace("'", "'")
+    )
+
+    # WRONG TERM PATTERNS
+    # Match patterns with flexible quote handling (both straight " and any remaining curly quotes)
     wrong_patterns = [
-        r'The note (states|says)\s*[:\-]?\s*"([^"]+)"',
-        r'Stated diagnosis\s*[:\-]?\s*"([^"]+)"',
-        r'Wrong term\s*[:\-]?\s*"([^"]+)"',
+        r'(?:the note (?:states|says)|diagnosed as|labeled as|called|documented as|referred to as|misdiagnosed as)\s*[:\-]?\s*["\u201c]([^"\u201d]+)["\u201d]',
+        r'(?:wrong term|1\.\s*wrong term)\s*[:\-]?\s*["\u201c]([^"\u201d]+)["\u201d]',
+        r'1\.\s*[Ww]rong\s+[Tt]erm\s*[:\-]?\s*["\u201c]([^"\u201d]+)["\u201d]',
+        r'1\.\s*[:\-]?\s*["\u201c]([^"\u201d]+)["\u201d]',
     ]
 
-    # CORRECT term patterns
+    # CORRECT TERM PATTERNS
     correct_patterns = [
-        r'(should be|should instead be|correct term (is|should be))\s*[:\-]?\s*"([^"]+)"',
-        r'should have been documented as\s*[:\-]?\s*"([^"]+)"',
-        r'should instead say\s*[:\-]?\s*"([^"]+)"',
+        r'(?:should be|should instead be|correct term (?:is|should be))\s*[:\-]?\s*["\u201c]([^"\u201d]+)["\u201d]',
+        r'(?:correct term|2\.\s*correct term)\s*[:\-]?\s*["\u201c]([^"\u201d]+)["\u201d]',
+        r'2\.\s*[Cc]orrect\s+[Tt]erm\s*[:\-]?\s*["\u201c]([^"\u201d]+)["\u201d]',
+        r'should have been (?:diagnosed|labeled|documented) as\s*[:\-]?\s*["\u201c]([^"\u201d]+)["\u201d]',
+        r'true (?:diagnosis|condition) (?:is|would be)\s*[:\-]?\s*["\u201c]([^"\u201d]+)["\u201d]',
+        r'2\.\s*[:\-]?\s*["\u201c]([^"\u201d]+)["\u201d]',
     ]
 
-    wrong_term = None
-    correct_term = None
+    wrong = None
+    correct = None
 
+    # extract wrong
     for p in wrong_patterns:
         m = re.search(p, cleaned, re.IGNORECASE)
         if m:
-            # last group usually the quoted term
-            wrong_term = m.groups()[-1].strip()
+            wrong = m.group(1).strip()
             break
 
+    # extract correct
     for p in correct_patterns:
         m = re.search(p, cleaned, re.IGNORECASE)
         if m:
-            # last group usually the quoted term
-            correct_term = m.groups()[-1].strip()
+            correct = m.group(1).strip()
             break
 
-    # sanity check: identical terms don't count as substitution
-    if wrong_term and correct_term and wrong_term.lower() == correct_term.lower():
+    # canonical fallback
+    lowered = cleaned.lower()
+    if wrong is None:
+        for k, v in CANONICAL_SUBSTITUTIONS.items():
+            if k in lowered:
+                wrong = k
+                correct = v
+                break
+
+    # sanity
+    if wrong and correct and wrong.lower() == correct.lower():
         return None, None
 
-    return wrong_term, correct_term
+    return wrong, correct
 
 
-# =========================
-# Rule-based safety checks (improved)
-# =========================
+# =====================================================================
+# SECTION 3 — IMPROVED RULE-BASED SAFETY CHECKS (v2)
+# =====================================================================
 
 def rule_based_safety_check(
     note: str,
     llm_classification: str,
-    expert_a_content: str = "",
-    expert_b_content: str = "",
+    expert_a_content: str,
+    expert_b_content: str,
+    wrong_a: Optional[str],
+    correct_a: Optional[str],
+    wrong_b: Optional[str],
+    correct_b: Optional[str],
 ) -> Dict[str, Any]:
     """
-    Apply rule-based safety checks to catch obvious false positives.
-
-    Returns:
-        Dict with:
-            - classification: Possibly overridden classification
-            - rule_applied: Name of rule (or None)
-            - reason: Explanation
+    Rule-based overrides ONLY for CLEAR false positives.
+    Conservative approach - only override when absolutely certain.
     """
 
-    all_content = f"{expert_a_content} {expert_b_content}".lower()
-    note_lower = note.lower()
+    all_c = f"{expert_a_content} {expert_b_content}".lower()
+    note_l = note.lower()
+    has_pair = (wrong_a and correct_a) or (wrong_b and correct_b)
 
-    # RULE 1: Culture / lab results explicitly confirm the diagnosis → not substitution
-    if re.search(r'culture (test[s]?|result[s]?)?\s*(show[s]?|indicate[s]?|confirm[s]?|positive for|grew|grows)', note_lower):
-        if llm_classification == "INCORRECT":
-            return {
-                "classification": "CORRECT",
-                "rule_applied": "RULE_1_CULTURE_DEFINITIVE",
-                "reason": "Culture/lab results indicate definitive confirmation, not a substitution error"
-            }
+    classification = llm_classification.upper()
 
-    # RULE 2: Process-issue language: missing tests, premature diagnosis → not substitution
-    process_patterns = [
-        r'should have (done|ordered|performed|confirmed|tested)',
-        r'did not (order|perform|confirm|test)',
-        r'failed to (order|perform|confirm|test)',
-        r'without (testing|confirmation|lab work|imaging)',
-        r'premature (diagnosis|conclusion)',
-        r'lack[s]? (of )?confirmation',
-        r'unconfirmed (diagnosis|infection)'
-    ]
-
-    for pattern in process_patterns:
-        if re.search(pattern, all_content):
-            if llm_classification == "INCORRECT":
-                return {
-                    "classification": "CORRECT",
-                    "rule_applied": "RULE_2_PROCESS_ISSUE",
-                    "reason": "Detected process-related critique (missing tests, premature diagnosis), not term substitution"
-                }
-
-    # RULE 3: Side-effect / reaction language → usually medication reaction, not wrong diagnosis
-    side_effect_patterns = [
-        r'(side effect[s]?|adverse effect[s]?|reaction[s]?) (of|from|to)',
-        r'disulfiram.{0,30}reaction',
-        r'expected (side effect|reaction|symptom)',
-        r'(medication|drug).{0,30}(interaction|reaction)',
-    ]
-
-    for pattern in side_effect_patterns:
-        if re.search(pattern, all_content):
-            if llm_classification == "INCORRECT":
-                return {
-                    "classification": "CORRECT",
-                    "rule_applied": "RULE_3_SIDE_EFFECT",
-                    "reason": "Discussion centers on medication side effects/reactions, not substituted diagnosis/term"
-                }
-
-    # RULE 4: Hierarchical broader/specific terminology → not substitution
-    hierarchical_patterns = [
-        r'(more|less) specific',
-        r'broader (term|category)',
-        r'(genus|species|class) vs',
-        r'hierarchically related',
-        r'same (organism|pathogen|disease|condition)',
-        r'(is|are) just (more|less) specific'
-    ]
-
-    for pattern in hierarchical_patterns:
-        if re.search(pattern, all_content):
-            if llm_classification == "INCORRECT":
-                return {
-                    "classification": "CORRECT",
-                    "rule_applied": "RULE_4_HIERARCHICAL_TERMS",
-                    "reason": "Expert reasoning indicates hierarchical relation (broad vs specific), not a true substitution"
-                }
-
-    # RULE 5: Strong uncertainty language across expert arguments → not definitive error
-    uncertainty_patterns = [
-        r'could (be|have been|also be)',
-        r'might (be|have been)',
-        r'possibly',
-        r'perhaps',
-        r'may be',
-        r'alternative (but valid|approach|option)',
-        r'both (are )?valid'
-    ]
-
-    uncertainty_count = 0
-    for pattern in uncertainty_patterns:
-        if re.search(pattern, all_content):
-            uncertainty_count += 1
-
-    if llm_classification == "INCORRECT" and uncertainty_count >= 2:
-        return {
-            "classification": "CORRECT",
-            "rule_applied": "RULE_5_UNCERTAINTY",
-            "reason": f"Multiple uncertainty phrases ({uncertainty_count}) suggest lack of definitive substitution error"
-        }
-
-    # No rules triggered
-    return {
-        "classification": llm_classification,
-        "rule_applied": None,
-        "reason": None
-    }
-
-
-# =========================
-# Confidence-based adjustment (weak supervision)
-# =========================
-
-def confidence_adjusted_predict(
-    classification: str,
-    expert_a_content: str = "",
-    expert_b_content: str = "",
-) -> Dict[str, Any]:
-    """
-    Flip low/medium confidence INCORRECT predictions to CORRECT.
-
-    This reduces false positives by requiring high confidence for INCORRECT.
-    """
-
+    # IMPORTANT: Only apply these rules if classification is INCORRECT
     if classification != "INCORRECT":
         return {
             "classification": classification,
-            "adjustment_applied": False,
-            "reason": None
+            "rule_applied": None,
+            "reason": None,
         }
 
-    conf_a = extract_confidence_from_text(expert_a_content)
-    conf_b = extract_confidence_from_text(expert_b_content)
+    # RULE 1 — Culture/lab confirmation (ONLY if NO term pair AND explicit culture in note)
+    # Be strict: only trigger if culture is in the note AND no terms extracted
+    if not has_pair:
+        if re.search(r'culture (test[s]?|result[s]?)?\s*(show[s]?|indicate[s]?|confirm[s]?|positive for)\s+[\w\s]+', note_l):
+            return {
+                "classification": "CORRECT",
+                "rule_applied": "RULE_1_CULTURE_DEFINITIVE",
+                "reason": "Lab/culture explicitly confirms diagnosis in note; likely not a substitution.",
+            }
 
-    # If either expert is LOW/MEDIUM → be conservative and flip to CORRECT
-    if conf_a in ["LOW", "MEDIUM"] or conf_b in ["LOW", "MEDIUM"]:
-        return {
-            "classification": "CORRECT",
-            "adjustment_applied": True,
-            "reason": f"Flipped INCORRECT to CORRECT due to low/medium confidence (A: {conf_a}, B: {conf_b})"
-        }
+    # RULE 2 — Process issues (ONLY if NO term pair AND strong process language)
+    # Require BOTH: no term pair AND multiple process indicators
+    if not has_pair:
+        process_patterns = [
+            r'should have (done|ordered|performed|confirmed|tested)',
+            r'did not (order|perform|confirm|test)',
+            r'failed to (order|perform|confirm|test)',
+            r'without (testing|confirmation|lab work|imaging)',
+            r'premature (diagnosis|conclusion)',
+            r'lack of confirmation',
+            r'unconfirmed (diagnosis|infection)',
+        ]
 
-    # If we can't read confidence reliably → conservative default
-    if conf_a is None or conf_b is None:
-        return {
-            "classification": "CORRECT",
-            "adjustment_applied": True,
-            "reason": "Flipped INCORRECT to CORRECT due to missing confidence scores (conservative default)"
-        }
+        process_count = sum(1 for p in process_patterns if re.search(p, all_c))
 
+        # Only override if 2+ process phrases (stronger signal)
+        if process_count >= 2:
+            return {
+                "classification": "CORRECT",
+                "rule_applied": "RULE_2_PROCESS_ISSUE",
+                "reason": f"Multiple process-issue indicators ({process_count}); not a substitution error.",
+            }
+
+    # RULE 3 — Side-effect / reaction (ONLY if NO term pair AND clear side effect language)
+    if not has_pair:
+        side_patterns = [
+            r'(side effect|adverse effect|adverse reaction)',
+            r'expected (reaction|symptom)',
+            r'(drug|medication).{0,40}(interaction|reaction)',
+        ]
+        side_count = sum(1 for p in side_patterns if re.search(p, all_c))
+
+        if side_count >= 1:
+            return {
+                "classification": "CORRECT",
+                "rule_applied": "RULE_3_SIDE_EFFECT",
+                "reason": "Side-effect discussion rather than wrong-term substitution.",
+            }
+
+    # RULE 4 — Hierarchical terms (ONLY if NO term pair AND hierarchical language)
+    if not has_pair:
+        hierarchical = [
+            r'more specific',
+            r'less specific',
+            r'broader term',
+            r'hierarchically related',
+            r'same (organism|pathogen)',
+        ]
+
+        if any(re.search(p, all_c) for p in hierarchical):
+            return {
+                "classification": "CORRECT",
+                "rule_applied": "RULE_4_HIERARCHICAL",
+                "reason": "Experts describe hierarchical differences; not substitution.",
+            }
+
+    # RULE 5 — Strong uncertainty (ONLY if NO term pair AND high uncertainty)
+    if not has_pair:
+        unc_patterns = [
+            r'could be',
+            r'might be',
+            r'possibly',
+            r'perhaps',
+            r'may be',
+            r'alternative but valid',
+            r'both valid',
+        ]
+        unc_count = sum(1 for p in unc_patterns if re.search(p, all_c))
+
+        # Require 3+ uncertainty phrases (very conservative)
+        if unc_count >= 3:
+            return {
+                "classification": "CORRECT",
+                "rule_applied": "RULE_5_UNCERTAINTY",
+                "reason": f"Very high uncertainty ({unc_count} phrases); not definitive error.",
+            }
+
+    # No rules triggered - keep original classification
     return {
         "classification": classification,
-        "adjustment_applied": False,
-        "reason": None
+        "rule_applied": None,
+        "reason": None,
     }
 
 
-# =========================
-# Hybrid predictor (Option C)
-# =========================
+# =====================================================================
+# SECTION 4 — CONFIDENCE-BASED ADJUSTMENT
+# =====================================================================
+
+def confidence_adjusted_predict(
+    classification: str,
+    conf_a: Optional[str],
+    conf_b: Optional[str],
+) -> Dict[str, Any]:
+    """
+    Flip INCORRECT → CORRECT ONLY IF BOTH experts have very low confidence.
+    More conservative - trusts experts more.
+    """
+
+    if classification != "INCORRECT":
+        return {"classification": classification, "adjustment_applied": False, "reason": None}
+
+    # Only flip if BOTH are missing confidence scores (very conservative)
+    # We trust experts even if they say LOW - they still identified a substitution
+    both_missing = (conf_a is None) and (conf_b is None)
+
+    if both_missing:
+        return {
+            "classification": "CORRECT",
+            "adjustment_applied": True,
+            "reason": f"Both experts missing confidence scores - conservative override (A={conf_a}, B={conf_b})."
+        }
+
+    return {"classification": classification, "adjustment_applied": False, "reason": None}
+
+
+# =====================================================================
+# SECTION 5 — FULL HYBRID SAFETY PREDICTOR (Option C v2)
+# =====================================================================
 
 def hybrid_safety_predict(
     note: str,
@@ -288,84 +344,101 @@ def hybrid_safety_predict(
     judge_content: str = "",
 ) -> Dict[str, Any]:
     """
-    Hybrid safety layer that combines:
-    - rule-based checks
-    - weak supervision (confidence, expert disagreement)
-    - two-term extraction
-    - judge-independent override
-
-    Returns:
-        {
-          "final_classification": "CORRECT"/"INCORRECT",
-          "initial_llm_classification": ...,
-          "rules": {...},
-          "confidence_adjustment": {...},
-          "term_evidence": {...},
-          "expert_signals": {...}
-        }
+    Full hybrid substitution-error safety predictor.
     """
 
-    # Step 1: Start with LLM/Judge classification
     current = llm_final_classification.upper()
 
-    # Step 2: Rule-based overrides (process issues, uncertainty, etc.)
-    rule_result = rule_based_safety_check(
-        note=note,
-        llm_classification=current,
-        expert_a_content=expert_a_content,
-        expert_b_content=expert_b_content,
-    )
-    current = rule_result["classification"]
-
-    # Step 3: Extract wrong/correct terms from each expert
+    # extract terms
     wrong_a, correct_a = extract_substitution_terms(expert_a_content)
     wrong_b, correct_b = extract_substitution_terms(expert_b_content)
+    any_pair = (wrong_a and correct_a) or (wrong_b and correct_b)
 
-    # Step 4: Expert classifications + confidence (weak supervision signals)
+    # expert signals
     class_a = parse_expert_classification(expert_a_content)
     class_b = parse_expert_classification(expert_b_content)
     conf_a = extract_confidence_from_text(expert_a_content)
     conf_b = extract_confidence_from_text(expert_b_content)
 
-    # Step 5: Enforce hard two-term rule for INCORRECT
-    any_strong_pair = (wrong_a and correct_a) or (wrong_b and correct_b)
-    if current == "INCORRECT" and not any_strong_pair:
-        # No explicit substitution pair found → override to CORRECT
+    # rules
+    rule_result = rule_based_safety_check(
+        note,
+        current,
+        expert_a_content,
+        expert_b_content,
+        wrong_a,
+        correct_a,
+        wrong_b,
+        correct_b,
+    )
+    current = rule_result["classification"]
+
+    # CRITICAL: If both experts agree on INCORRECT and BOTH have term pairs, TRUST THEM
+    # This overrides BOTH the Judge AND the rule-based checks
+    both_have_pairs = bool(wrong_a and correct_a) and bool(wrong_b and correct_b)
+    both_agree_incorrect = (class_a == "INCORRECT") and (class_b == "INCORRECT")
+
+    # Debug logging
+    print(f"\n[DEBUG CONSENSUS CHECK]")
+    print(f"  Expert A: class={class_a}, wrong={wrong_a}, correct={correct_a}, conf={conf_a}")
+    print(f"  Expert B: class={class_b}, wrong={wrong_b}, correct={correct_b}, conf={conf_b}")
+    print(f"  both_agree_incorrect={both_agree_incorrect}, both_have_pairs={both_have_pairs}")
+    print(f"  current={current}")
+    print(f"  llm_classification={llm_final_classification}")
+
+    # OVERRIDE: If both experts agree INCORRECT with evidence, trust them regardless of Judge
+    if both_agree_incorrect and both_have_pairs:
+        # Strong consensus with evidence - don't override
+        print(f"  → TRIGGERING CONSENSUS_WITH_EVIDENCE - keeping INCORRECT")
+        return {
+            "final_classification": "INCORRECT",
+            "initial_llm_classification": llm_final_classification.upper(),
+            "rules": {
+                "rule_applied": "CONSENSUS_WITH_EVIDENCE",
+                "reason": "Both experts agree INCORRECT and both provided term pairs - strong consensus",
+            },
+            "confidence_adjustment": {"classification": "INCORRECT", "adjustment_applied": False, "reason": None},
+            "term_evidence": {
+                "expert_a": {"wrong": wrong_a, "correct": correct_a},
+                "expert_b": {"wrong": wrong_b, "correct": correct_b},
+            },
+            "expert_signals": {
+                "expert_a": {"classification": class_a, "confidence": conf_a},
+                "expert_b": {"classification": class_b, "confidence": conf_b},
+                "disagreement": False,
+            }
+        }
+
+    # hard two-term rule (only apply if no consensus or no pairs)
+    if current == "INCORRECT" and not any_pair:
         return {
             "final_classification": "CORRECT",
             "initial_llm_classification": llm_final_classification.upper(),
             "rules": {
                 "rule_applied": rule_result["rule_applied"] or "RULE_HARD_TWO_TERM",
-                "reason": rule_result["reason"] or "INCORRECT requires explicit wrong+correct term pair from at least one expert"
+                "reason": rule_result["reason"] or "No wrong+correct term pair detected.",
             },
             "confidence_adjustment": None,
             "term_evidence": {
-                "expert_a": {"wrong_term": wrong_a, "correct_term": correct_a},
-                "expert_b": {"wrong_term": wrong_b, "correct_term": correct_b},
+                "expert_a": {"wrong": wrong_a, "correct": correct_a},
+                "expert_b": {"wrong": wrong_b, "correct": correct_b},
             },
             "expert_signals": {
                 "expert_a": {"classification": class_a, "confidence": conf_a},
                 "expert_b": {"classification": class_b, "confidence": conf_b},
-                "disagreement": class_a is not None and class_b is not None and class_a != class_b
+                "disagreement": class_a != class_b if class_a and class_b else False,
             }
         }
 
-    # Step 6: Handle expert disagreement as weak supervision
-    experts_disagree = (class_a is not None and class_b is not None and class_a != class_b)
-
-    if current == "INCORRECT" and experts_disagree and not any_strong_pair:
-        # If experts disagree and we don't have strong term evidence, be conservative
+    # expert disagreement handling (only override without pair)
+    experts_disagree = (class_a and class_b and class_a != class_b)
+    disagreement_override = None
+    if current == "INCORRECT" and experts_disagree and not any_pair:
         current = "CORRECT"
-        disagreement_reason = "Experts disagree on classification and no strong term pair present → conservative CORRECT"
-    else:
-        disagreement_reason = None
+        disagreement_override = "Experts disagree with no strong substitution evidence."
 
-    # Step 7: Confidence-based adjustment
-    conf_result = confidence_adjusted_predict(
-        classification=current,
-        expert_a_content=expert_a_content,
-        expert_b_content=expert_b_content,
-    )
+    # confidence adjustment
+    conf_result = confidence_adjusted_predict(current, conf_a, conf_b)
     current = conf_result["classification"]
 
     return {
@@ -374,16 +447,16 @@ def hybrid_safety_predict(
         "rules": {
             "rule_applied": rule_result["rule_applied"],
             "reason": rule_result["reason"],
-            "disagreement_override": disagreement_reason,
+            "disagreement_override": disagreement_override,
         },
         "confidence_adjustment": conf_result,
         "term_evidence": {
-            "expert_a": {"wrong_term": wrong_a, "correct_term": correct_a},
-            "expert_b": {"wrong_term": wrong_b, "correct_term": correct_b},
+            "expert_a": {"wrong": wrong_a, "correct": correct_a},
+            "expert_b": {"wrong": wrong_b, "correct": correct_b},
         },
         "expert_signals": {
             "expert_a": {"classification": class_a, "confidence": conf_a},
             "expert_b": {"classification": class_b, "confidence": conf_b},
-            "disagreement": experts_disagree
+            "disagreement": experts_disagree,
         }
     }

@@ -120,12 +120,12 @@ def Judge_node(state: MedState, llm) -> dict:
         print(f"\nRULE TRIGGERED: {safety_result['rules']['rule_applied']}")
         print(f"   Reason: {safety_result['rules']['reason']}")
 
-    if safety_result["rules"]["disagreement_override"]:
+    if safety_result["rules"].get("disagreement_override"):
         print(f"\nDISAGREEMENT OVERRIDE:")
         print(f"   {safety_result['rules']['disagreement_override']}")
 
     # Show confidence adjustment
-    if safety_result["confidence_adjustment"]["adjustment_applied"]:
+    if safety_result["confidence_adjustment"] and safety_result["confidence_adjustment"]["adjustment_applied"]:
         print(f"\nCONFIDENCE FILTER:")
         print(f"   {safety_result['confidence_adjustment']['reason']}")
 
@@ -134,11 +134,11 @@ def Judge_node(state: MedState, llm) -> dict:
     expert_a_terms = safety_result["term_evidence"]["expert_a"]
     expert_b_terms = safety_result["term_evidence"]["expert_b"]
 
-    print(f"   Expert A: Wrong='{expert_a_terms['wrong_term']}', Correct='{expert_a_terms['correct_term']}'")
-    print(f"   Expert B: Wrong='{expert_b_terms['wrong_term']}', Correct='{expert_b_terms['correct_term']}'")
+    print(f"   Expert A: Wrong='{expert_a_terms['wrong']}', Correct='{expert_a_terms['correct']}'")
+    print(f"   Expert B: Wrong='{expert_b_terms['wrong']}', Correct='{expert_b_terms['correct']}'")
 
     # Show expert signals
-    print(f"\nEXPERT SIGNALS:")
+    print(f"\n👥 EXPERT SIGNALS:")
     expert_a_sig = safety_result["expert_signals"]["expert_a"]
     expert_b_sig = safety_result["expert_signals"]["expert_b"]
 
