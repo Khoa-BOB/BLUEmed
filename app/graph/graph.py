@@ -16,28 +16,13 @@ def check_round1_consensus(state: MedState) -> str:
     Check if experts agree in Round 1.
     If they agree, skip Round 2 and go straight to judge.
     If they disagree, continue to Round 2 for debate.
+    
+    NOTE: Currently disabled - always runs Round 2 for full debate.
     """
-    if state["current_round"] == 1:
-        # Check if both experts have made their arguments
-        expertA_args = state.get("expertA_arguments", [])
-        expertB_args = state.get("expertB_arguments", [])
-
-        if expertA_args and expertB_args:
-            # Extract classifications from Round 1
-            argA = expertA_args[0]["content"].upper()
-            argB = expertB_args[0]["content"].upper()
-
-            # Simple consensus check
-            a_says_incorrect = "INCORRECT" in argA and "Based on my analysis, this note is INCORRECT" in argA
-            b_says_incorrect = "INCORRECT" in argB and "Based on my analysis, this note is INCORRECT" in argB
-
-            # If both agree, skip Round 2
-            if (a_says_incorrect and b_says_incorrect) or \
-               (not a_says_incorrect and not b_says_incorrect):
-                print("\n✓ Round 1 Consensus Detected - Skipping Round 2")
-                return "judge"
-
-    # Otherwise continue to Round 2
+    # DISABLED: Always continue to Round 2 for complete debate
+    # The original consensus check was too simplistic and caused false positives
+    
+    # Always continue to Round 2
     if state["current_round"] >= state["max_rounds"]:
         return "judge"
     else:

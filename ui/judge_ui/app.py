@@ -22,7 +22,7 @@ def init_session_state():
 
 def sidebar_controls():
     """Render sidebar with configuration controls."""
-    st.sidebar.header("⚙️ Settings")
+    st.sidebar.header("Settings")
 
     # Mode selector
     mode = st.sidebar.radio(
@@ -60,19 +60,19 @@ def sidebar_controls():
     
     col1, col2 = st.sidebar.columns(2)
     with col1:
-        if st.button("🗑️ Clear Result", use_container_width=True):
+        if st.button("Clear Result", use_container_width=True):
             st.session_state["last_response"] = None
             st.rerun()
     
     with col2:
-        if st.button("🔄 Clear All", use_container_width=True):
+        if st.button("Clear All", use_container_width=True):
             st.session_state["last_response"] = None
             st.session_state["history"] = []
             st.rerun()
 
     # Show history count
     if st.session_state["history"]:
-        st.sidebar.info(f"📊 History: {len(st.session_state['history'])} analysis(es)")
+        st.sidebar.info(f"History: {len(st.session_state['history'])} analysis(es)")
 
 
 def build_client():
@@ -104,21 +104,21 @@ def render_expert_argument(expert_name: str, expert_label: str, argument: Debate
 
 def render_judge_decision(decision: JudgeDecision):
     """Render the judge's final decision."""
-    st.markdown("## 🏛️ Judge's Final Decision")
+    st.markdown("## Judge's Final Decision")
     
     # Visual indicator for final answer
     answer_colors = {
-        "CORRECT": ("✅", "#d4edda", "#155724"),
-        "INCORRECT": ("❌", "#f8d7da", "#721c24"),
-        "UNKNOWN": ("❓", "#fff3cd", "#856404")
+        "CORRECT": ("#d4edda", "#155724"),
+        "INCORRECT": ("#f8d7da", "#721c24"),
+        "UNKNOWN": ("#fff3cd", "#856404")
     }
     
-    icon, bg_color, text_color = answer_colors.get(decision.final_answer, ("ℹ️", "#d1ecf1", "#0c5460"))
+    bg_color, text_color = answer_colors.get(decision.final_answer, ("#d1ecf1", "#0c5460"))
     
     st.markdown(
         f"""<div style="background-color: {bg_color}; padding: 20px; border-radius: 10px; 
         border: 2px solid {text_color}; margin: 20px 0;">
-        <h2 style="color: {text_color}; margin: 0;">{icon} Final Answer: {decision.final_answer}</h2>
+        <h2 style="color: {text_color}; margin: 0;">Final Answer: {decision.final_answer}</h2>
         </div>""",
         unsafe_allow_html=True
     )
@@ -133,14 +133,14 @@ def render_judge_decision(decision: JudgeDecision):
             st.metric("Winner", decision.winner)
     
     # Show reasoning
-    st.markdown("### 📝 Reasoning")
+    st.markdown("### Reasoning")
     st.write(decision.reasoning)
 
 
 def main():
     st.set_page_config(
         page_title=APP_TITLE,
-        page_icon="🏥",
+        page_icon="⚕",
         layout="wide",
         initial_sidebar_state="expanded"
     )
@@ -154,7 +154,7 @@ def main():
     sidebar_controls()
 
     # Main input form
-    st.markdown("## 📋 Medical Note Input")
+    st.markdown("## Medical Note Input")
     
     with st.form("medical_note_form"):
         medical_note = st.text_area(
@@ -166,18 +166,18 @@ def main():
         
         col1, col2, col3 = st.columns([2, 1, 1])
         with col1:
-            submit_button = st.form_submit_button("🔍 Analyze Medical Note", use_container_width=True, type="primary")
+            submit_button = st.form_submit_button("Analyze Medical Note", use_container_width=True, type="primary")
         with col2:
-            use_example = st.form_submit_button("📄 Load Example", use_container_width=True)
+            use_example = st.form_submit_button("Load Example", use_container_width=True)
 
     # Handle example loading
     if use_example:
-        st.info("💡 Click 'Load Example' again after the page reloads, or paste your own medical note.")
+        st.info("Click 'Load Example' again after the page reloads, or paste your own medical note.")
 
     # Handle form submission
     if submit_button:
         if not medical_note.strip():
-            st.error("⚠️ Please enter a medical note to analyze.")
+            st.error("Please enter a medical note to analyze.")
         else:
             # Create request
             req = DebateRequest(medical_note=medical_note.strip(), max_rounds=2)
@@ -185,14 +185,14 @@ def main():
             # Run analysis
             client = build_client()
             
-            with st.spinner("🔄 Running debate analysis... This may take a moment."):
+            with st.spinner("Running debate analysis... This may take a moment."):
                 try:
                     resp: DebateResponse = client.run(req)
                     st.session_state["last_response"] = json.loads(resp.model_dump_json())
                     st.session_state["history"].append(st.session_state["last_response"])
-                    st.success("✅ Analysis complete!")
+                    st.success("Analysis complete!")
                 except Exception as e:
-                    st.error(f"❌ Error during analysis: {str(e)}")
+                    st.error(f"Error during analysis: {str(e)}")
                     return
 
     # Display results
@@ -200,65 +200,15 @@ def main():
         resp_data = st.session_state["last_response"]
         
         st.markdown("---")
-        st.markdown("## 📊 Analysis Results")
+        st.markdown("## Analysis Results")
         
         # Show medical note being analyzed
-        with st.expander("📄 Medical Note (click to expand)", expanded=False):
+        with st.expander("Medical Note (click to expand)", expanded=False):
             st.text(resp_data["medical_note"])
         
         st.markdown("---")
         
-        # Round 1 Arguments
-        st.markdown("## 🥊 Round 1: Initial Arguments")
-        
-        col1, col2 = st.columns(2)
-        
-        with col1:
-            if resp_data["expertA_arguments"]:
-                arg_data = resp_data["expertA_arguments"][0]
-                arg = DebateArgument(**arg_data) if isinstance(arg_data, dict) else arg_data
-                render_expert_argument("A", "👨‍⚕️ Expert A (Mayo Clinic)", arg, "#e3f2fd")
-                
-                # Show retrieved docs if available
-                if resp_data.get("expertA_retrieved_docs"):
-                    with st.expander("📚 Mayo Clinic Sources", expanded=False):
-                        for i, doc in enumerate(resp_data["expertA_retrieved_docs"][:3], 1):
-                            st.markdown(f"**{i}.** {doc[:200]}...")
-        
-        with col2:
-            if resp_data["expertB_arguments"]:
-                arg_data = resp_data["expertB_arguments"][0]
-                arg = DebateArgument(**arg_data) if isinstance(arg_data, dict) else arg_data
-                render_expert_argument("B", "👩‍⚕️ Expert B (WebMD)", arg, "#fff3e0")
-                
-                # Show retrieved docs if available
-                if resp_data.get("expertB_retrieved_docs"):
-                    with st.expander("📚 WebMD Sources", expanded=False):
-                        for i, doc in enumerate(resp_data["expertB_retrieved_docs"][:3], 1):
-                            st.markdown(f"**{i}.** {doc[:200]}...")
-        
-        st.markdown("---")
-        
-        # Round 2 Arguments
-        st.markdown("## 🥊 Round 2: Counter-Arguments")
-        
-        col1, col2 = st.columns(2)
-        
-        with col1:
-            if len(resp_data["expertA_arguments"]) > 1:
-                arg_data = resp_data["expertA_arguments"][1]
-                arg = DebateArgument(**arg_data) if isinstance(arg_data, dict) else arg_data
-                render_expert_argument("A", "👨‍⚕️ Expert A (Mayo Clinic)", arg, "#e3f2fd")
-        
-        with col2:
-            if len(resp_data["expertB_arguments"]) > 1:
-                arg_data = resp_data["expertB_arguments"][1]
-                arg = DebateArgument(**arg_data) if isinstance(arg_data, dict) else arg_data
-                render_expert_argument("B", "👩‍⚕️ Expert B (WebMD)", arg, "#fff3e0")
-        
-        st.markdown("---")
-        
-        # Judge Decision
+        # Judge Decision (shown first)
         if resp_data.get("judge_decision"):
             decision_data = resp_data["judge_decision"]
             decision = JudgeDecision(**decision_data) if isinstance(decision_data, dict) else decision_data
@@ -266,13 +216,61 @@ def main():
         
         st.markdown("---")
         
+        # Round 1 Arguments
+        with st.expander("Round 1: Initial Arguments", expanded=False):
+            col1, col2 = st.columns(2)
+            
+            with col1:
+                if resp_data["expertA_arguments"]:
+                    arg_data = resp_data["expertA_arguments"][0]
+                    arg = DebateArgument(**arg_data) if isinstance(arg_data, dict) else arg_data
+                    render_expert_argument("A", "Expert A (Mayo Clinic)", arg, "#e3f2fd")
+                    
+                    # Show retrieved docs if available
+                    if resp_data.get("expertA_retrieved_docs"):
+                        with st.expander("Mayo Clinic Sources", expanded=False):
+                            for i, doc in enumerate(resp_data["expertA_retrieved_docs"][:3], 1):
+                                st.markdown(f"**{i}.** {doc[:200]}...")
+            
+            with col2:
+                if resp_data["expertB_arguments"]:
+                    arg_data = resp_data["expertB_arguments"][0]
+                    arg = DebateArgument(**arg_data) if isinstance(arg_data, dict) else arg_data
+                    render_expert_argument("B", "Expert B (WebMD)", arg, "#fff3e0")
+                    
+                    # Show retrieved docs if available
+                    if resp_data.get("expertB_retrieved_docs"):
+                        with st.expander("WebMD Sources", expanded=False):
+                            for i, doc in enumerate(resp_data["expertB_retrieved_docs"][:3], 1):
+                                st.markdown(f"**{i}.** {doc[:200]}...")
+        
+        st.markdown("---")
+        
+        # Round 2 Arguments
+        with st.expander("Round 2: Counter-Arguments", expanded=False):
+            col1, col2 = st.columns(2)
+            
+            with col1:
+                if len(resp_data["expertA_arguments"]) > 1:
+                    arg_data = resp_data["expertA_arguments"][1]
+                    arg = DebateArgument(**arg_data) if isinstance(arg_data, dict) else arg_data
+                    render_expert_argument("A", "Expert A (Mayo Clinic)", arg, "#e3f2fd")
+            
+            with col2:
+                if len(resp_data["expertB_arguments"]) > 1:
+                    arg_data = resp_data["expertB_arguments"][1]
+                    arg = DebateArgument(**arg_data) if isinstance(arg_data, dict) else arg_data
+                    render_expert_argument("B", "Expert B (WebMD)", arg, "#fff3e0")
+        
+        st.markdown("---")
+        
         # Download options
-        st.markdown("## 💾 Download Results")
+        st.markdown("## Download Results")
         col1, col2 = st.columns(2)
         
         with col1:
             st.download_button(
-                label="📥 Download JSON",
+                label="Download JSON",
                 file_name=f"debate_analysis_{resp_data['request_id'][:8]}.json",
                 mime="application/json",
                 data=json.dumps(resp_data, indent=2),
@@ -282,7 +280,7 @@ def main():
         with col2:
             md_report = generate_markdown_report(resp_data)
             st.download_button(
-                label="📥 Download Report (MD)",
+                label="Download Report (MD)",
                 file_name=f"debate_analysis_{resp_data['request_id'][:8]}.md",
                 mime="text/markdown",
                 data=md_report,

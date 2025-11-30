@@ -1,0 +1,14 @@
+[theme]
+primaryColor = "#11aad9"
+backgroundColor = "#FFFFFF"
+secondaryBackgroundColor = "#F0F2F6"
+textColor = "#262730"
+font = "sans serif"
+
+# Dark mode theme (user can toggle in Streamlit settings)
+# These will automatically be used when dark mode is active
+[theme.dark]
+primaryColor = "#11d9b4"
+backgroundColor = "#0E1117"
+secondaryBackgroundColor = "#262730"
+textColor = "#FAFAFA"
