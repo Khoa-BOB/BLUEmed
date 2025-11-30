@@ -26,3 +26,9 @@ class MedState(TypedDict):
     # Judge decision
     judge_decision: Optional[str]
     final_answer: Optional[str]  # CORRECT or INCORRECT
+
+    # Single agent fields
+    single_agent_decision: Optional[str]
+    single_agent_retrieved_docs: Optional[List[str]]
+    knowledge_source: Optional[str]
+    safety_diagnostics: Optional[dict]
