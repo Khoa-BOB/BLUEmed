@@ -14,28 +14,82 @@ def increment_round(state: MedState) -> dict:
 def check_round1_consensus(state: MedState) -> str:
     """
     Check if experts agree in Round 1.
-    If they agree, skip Round 2 and go straight to judge.
-    If they disagree, continue to Round 2 for debate.
+
+    Consensus criteria (all must be true to skip Round 2):
+    1. Both experts agree on classification (CORRECT or INCORRECT)
+    2. If INCORRECT, both must agree on the same wrong term
+    3. If INCORRECT, both must agree on the same correct term
+
+    If any disagreement exists, continue to Round 2 for debate.
     """
+    import re
+
     if state["current_round"] == 1:
         # Check if both experts have made their arguments
         expertA_args = state.get("expertA_arguments", [])
         expertB_args = state.get("expertB_arguments", [])
 
         if expertA_args and expertB_args:
-            # Extract classifications from Round 1
-            argA = expertA_args[0]["content"].upper()
-            argB = expertB_args[0]["content"].upper()
+            argA = expertA_args[0]["content"]
+            argB = expertB_args[0]["content"]
 
-            # Simple consensus check
-            a_says_incorrect = "INCORRECT" in argA and "Based on my analysis, this note is INCORRECT" in argA
-            b_says_incorrect = "INCORRECT" in argB and "Based on my analysis, this note is INCORRECT" in argB
+            # Extract classifications
+            def extract_classification(arg_text):
+                """Extract FINAL CLASSIFICATION from argument."""
+                match = re.search(r'FINAL CLASSIFICATION:\s*(CORRECT|INCORRECT)', arg_text, re.IGNORECASE)
+                return match.group(1).upper() if match else None
 
-            # If both agree, skip Round 2
-            if (a_says_incorrect and b_says_incorrect) or \
-               (not a_says_incorrect and not b_says_incorrect):
-                print("\n✓ Round 1 Consensus Detected - Skipping Round 2")
-                return "judge"
+            def extract_terms(arg_text):
+                """Extract wrong and correct terms from argument."""
+                wrong_match = re.search(r'Wrong term:\s*["\']?([^"\'\n]+)["\']?', arg_text, re.IGNORECASE)
+                correct_match = re.search(r'Correct term:\s*["\']?([^"\'\n]+)["\']?', arg_text, re.IGNORECASE)
+
+                wrong_term = wrong_match.group(1).strip() if wrong_match else None
+                correct_term = correct_match.group(1).strip() if correct_match else None
+
+                return wrong_term, correct_term
+
+            class_a = extract_classification(argA)
+            class_b = extract_classification(argB)
+
+            wrong_a, correct_a = extract_terms(argA)
+            wrong_b, correct_b = extract_terms(argB)
+
+            # Debug output
+            print(f"\n[CONSENSUS CHECK - Round 1]")
+            print(f"  Expert A: class={class_a}, wrong='{wrong_a}', correct='{correct_a}'")
+            print(f"  Expert B: class={class_b}, wrong='{wrong_b}', correct='{correct_b}'")
+
+            # Check for consensus
+            both_agree_on_classification = (class_a == class_b)
+
+            if both_agree_on_classification:
+                # If both say CORRECT, that's full consensus
+                if class_a == "CORRECT":
+                    print("\n✓ Round 1 Consensus: Both experts agree CORRECT - Skipping Round 2")
+                    return "judge"
+
+                # If both say INCORRECT, check if they agree on terms
+                elif class_a == "INCORRECT":
+                    # Normalize terms for comparison (case-insensitive, strip whitespace)
+                    wrong_a_norm = wrong_a.lower().strip() if wrong_a else ""
+                    wrong_b_norm = wrong_b.lower().strip() if wrong_b else ""
+                    correct_a_norm = correct_a.lower().strip() if correct_a else ""
+                    correct_b_norm = correct_b.lower().strip() if correct_b else ""
+
+                    same_wrong_term = (wrong_a_norm == wrong_b_norm) and wrong_a_norm != ""
+                    same_correct_term = (correct_a_norm == correct_b_norm) and correct_a_norm != ""
+
+                    if same_wrong_term and same_correct_term:
+                        print(f"\n✓ Round 1 Consensus: Both experts agree INCORRECT with same terms")
+                        print(f"  Wrong: '{wrong_a}' → Correct: '{correct_a}'")
+                        print("  Skipping Round 2")
+                        return "judge"
+                    else:
+                        print(f"\n⚡ Round 1 Disagreement: Experts propose different corrections")
+                        print(f"  Expert A: '{wrong_a}' → '{correct_a}'")
+                        print(f"  Expert B: '{wrong_b}' → '{correct_b}'")
+                        print("  Proceeding to Round 2 for debate")
 
     # Otherwise continue to Round 2
     if state["current_round"] >= state["max_rounds"]:

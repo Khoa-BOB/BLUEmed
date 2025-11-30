@@ -20,6 +20,7 @@ decorator==5.2.1
 distro==1.9.0
 durationpy==0.10
 executing==2.2.1
+fastapi==0.115.5
 filelock==3.20.0
 filetype==1.2.0
 flatbuffers==25.9.23

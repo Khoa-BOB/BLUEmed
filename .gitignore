@@ -79,3 +79,10 @@ midterm_report
 result_logger.py
 
 evaluation/
+
+# --- Temporary files ---
+tempCodeRunnerFile.py
+*.tmp
+
+# --- Test outputs ---
+test_results/
