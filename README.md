@@ -604,19 +604,44 @@ expert_b_args = result.get("expertB_arguments")
 
 ### Environment Variables
 
+#### LLM Configuration
+
 | Variable | Description | Default | Options |
 |----------|-------------|---------|---------|
-| `EXPERT_MODEL` | LLM model for experts | `gemini-2.0-flash` | Any Gemini/Ollama model |
-| `JUDGE_MODEL` | LLM model for judge | `gemini-2.0-flash` | Any Gemini/Ollama model |
-| `GOOGLE_API_KEY` | Gemini API key | Required | Your API key |
-| `GOOGLE_API_KEY_EMBED` | Embedding API key | Required | Your API key |
-| `USE_RETRIEVER` | Enable RAG system | `True` | `True` / `False` |
+| `EXPERT_MODEL` | LLM model for experts | `llama3.1:8b` | Any supported model* |
+| `JUDGE_MODEL` | LLM model for judge | `llama3.1:8b` | Any supported model* |
+| `GOOGLE_API_KEY` | Gemini API key | Optional | Your API key |
+| `GEMINI_MODEL` | Default Gemini model | `gemini-2.0-flash` | Gemini models |
+| `OPENAI_API_KEY` | OpenAI API key | Optional | Your API key |
+| `GPT_MODEL` | Default GPT model | `gpt-4o-mini` | GPT models |
+| `HUGGINGFACE_API_KEY` | HuggingFace token | Optional | Your token |
+| `HUGGINGFACE_MODEL` | Default HF model | `meta-llama/Meta-Llama-3-8B-Instruct` | HF model IDs |
+
+*Supported model formats:
+- Ollama: `llama3.1:8b`, `mistral:7b` (local models)
+- Gemini: `gemini-2.0-flash`, `gemini-1.5-pro`
+- GPT: `gpt-4o`, `gpt-4o-mini`, `gpt-3.5-turbo`
+- HuggingFace: `hf:meta-llama/Meta-Llama-3-8B-Instruct`
+
+See [app/llm/README.md](app/llm/README.md) for detailed LLM configuration guide.
+
+#### RAG Configuration
+
+| Variable | Description | Default | Options |
+|----------|-------------|---------|---------|
+| `USE_RETRIEVER` | Enable RAG system | `False` | `True` / `False` |
+| `GOOGLE_API_KEY_EMBED` | Embedding API key | Optional | Your API key |
 | `EMBEDDING_MODEL` | Embedding model | `gemini-embedding-001` | Gemini embedding models |
-| `PERSIST_DIR` | Vector DB directory | `vectordb/chroma_gemini` | Any path |
+| `PERSIST_DIR` | Vector DB directory | `./chroma_db` | Any path |
 | `FORCE_REBUILD` | Force rebuild DBs | `False` | `True` / `False` |
-| `EMBED_BATCH_SIZE` | Embedding batch size | `5` | Integer |
+
+#### Performance Tuning
+
+| Variable | Description | Default | Options |
+|----------|-------------|---------|---------|
+| `EMBED_BATCH_SIZE` | Embedding batch size | `500` | Integer (100-500) |
 | `EMBED_BATCH_DELAY` | Delay between batches | `1.0` | Float (seconds) |
-| `EMBED_RPM` | Requests per minute | `15` | Integer |
+| `EMBED_RPM` | Requests per minute | `3000` | Integer |
 | `EMBED_TPM` | Tokens per minute | `1000000` | Integer |
 
 ### Retrieval Configuration

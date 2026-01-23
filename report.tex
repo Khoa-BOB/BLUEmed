@@ -1,0 +1,458 @@
+\documentclass[11pt]{article}
+
+% Change "review" to "final" to generate the final (sometimes called camera-ready) version.
+% Change to "preprint" to generate a non-anonymous version with page numbers.
+\usepackage[final]{acl}
+
+% Standard package includes
+\usepackage{times}
+\usepackage{latexsym}
+
+% For proper rendering and hyphenation of words containing Latin characters (including in bib files)
+\usepackage[T1]{fontenc}
+% For Vietnamese characters
+% \usepackage[T5]{fontenc}
+% See https://www.latex-project.org/help/documentation/encguide.pdf for other character sets
+
+% This assumes your files are encoded as UTF8
+\usepackage[utf8]{inputenc}
+
+% This is not strictly necessary, and may be commented out,
+% but it will improve the layout of the manuscript,
+% and will typically save some space.
+\usepackage{microtype}
+
+% This is also not strictly necessary, and may be commented out.
+% However, it will improve the aesthetics of text in
+% the typewriter font.
+\usepackage{inconsolata}
+
+%Including images in your LaTeX document requires adding
+%additional package(s)
+\usepackage{graphicx}
+
+
+
+% If the title and author information does not fit in the area allocated, uncomment the following
+%
+%\setlength\titlebox{<dim>}
+%
+% and set <dim> to something 5cm or larger.
+
+\title{Biomedical Language-based Utility for Error Detection in Medication (BLUEmed)}
+
+% Author information can be set in various styles:
+% For several authors from the same institution:
+% \author{Author 1 \and ... \and Author n \\
+%         Address line \\ ... \\ Address line}
+% if the names do not fit well on one line use
+%         Author 1 \\ {\bf Author 2} \\ ... \\ {\bf Author n} \\
+% For authors from different institutions:
+% \author{Author 1 \\ Address line \\  ... \\ Address line
+%         \And  ... \And
+%         Author n \\ Address line \\ ... \\ Address line}
+% To start a separate ``row'' of authors use \AND, as in
+% \author{Author 1 \\ Address line \\  ... \\ Address line
+%         \AND
+%         Author 2 \\ Address line \\ ... \\ Address line \And
+%         Author 3 \\ Address line \\ ... \\ Address line}
+\author{
+Nguyen Anh Khoa Tran \quad
+Saukun Thika You \quad
+Wesley K. Marizane \\
+University of Memphis \\
+Department of Computer Science \\
+\texttt{\{ntran5,syou,wmrzane\}@memphis.edu}
+}
+\usepackage{amsmath}
+\begin{document}
+\maketitle
+\begin{abstract}
+Large language models have demonstrated strong capabilities in reasoning and text understanding, yet they continue to produce factual inconsistencies and subtle hallucinations that undermine their suitability for safety-critical applications. These challenges become more pronounced in clinical contexts, where detecting fine-grained inconsistencies in medical narratives requires domain awareness and precise inferential control.
+
+
+We introduce BLUEmed, a reproduction and extension of a recent ACL BioNLP 2025 study that uses a multi-agent debate framework designed to improve the identification of subtle errors in clinical documentation. Our implementation employs Gemini 2.0 Flash within a structured debate architecture and incorporates a hybrid retrieval pipeline that integrates both offline medical resources and real-time web information. Evaluated on the MEDEC benchmark, BLUEmed achieves 61.64 percent accuracy in the few-shot setting. We further analyze model performance across error types, medical specialties, and demographic subgroups. Our findings show that multi-agent debate with few-shot prompting improves accuracy compared to a single Gemini agent, though performance varies across categories. We highlight the statistical motivation for automated error detection in clinical documentation and provide insight into challenges and future improvements.
+\end{abstract}
+
+
+\section{Introduction}
+
+Clinical documentation is foundational to medical decision making, yet research consistently shows that errors in electronic health records (EHRs) pose substantial risks to patient safety. In a large multi-institutional study, more than 21 percent of patients reported finding mistakes in their clinical notes, and approximately 40 percent of these errors were considered serious enough to potentially affect care quality \citep{bell2020}. Diagnostic inaccuracies remain similarly consequential; an estimated 6 to 17 percent of adverse events in hospitalized patients are associated with diagnostic error \citep{bell2020}. 
+Clinical documentation also represents a major component of provider workload, with physicians spending 52 to 102 minutes per day writing or reviewing notes \citep{hripcsak2011}. These findings highlight the scale at which human-generated documentation can accumulate inaccuracies and propagate through clinical workflows.
+
+
+Importantly, documentation errors do not affect all patient groups in the same way. Prior work shows that patients from minor racial and ethnic backgrounds are more likely to experience diagnostic delays, miscommunication, and inaccurate or stigmatizing language in their clinical notes \citep{chen2021racial,sun2022bias}. These disparities highlight the need to assess error detection systems not only for overall accuracy but also for how they perform across different demographic groups. Fairness is essential, since automated methods that reproduce existing biases could unintentionally reinforce inequities in clinical documentation.
+
+As healthcare systems generate increasingly large volumes of free-text notes, automated approaches for identifying potential documentation errors have become both feasible and necessary. Large language models (LLMs) offer promising capabilities in text understanding and reasoning over clinical narratives, and their ability to process long-form documentation makes them attractive candidates for supporting clinicians in error detection. However, their usefulness depends on frameworks that structure model reasoning, incorporate trusted medical knowledge sources, and provide transparent decision-making signals suitable for clinical oversight.
+
+
+In this work, we introduce BLUEmed, a reproduction and empirical analysis of a multi-agent system designed to detect subtle errors in clinical documentation. BLUEmed integrates structured debate between LLM agents with retrieval from authoritative medical resources, enabling cross-verification of clinical statements and evaluation of potential inconsistencies. Using the MEDEC benchmark, we assess the reproducibility of the method, examine fairness-related performance variation across patient subgroups, and evaluate the extent to which structured LLM-based reasoning can mitigate human documentation errors.
+
+
+Our research contributes the following:
+
+\begin{enumerate}
+    \item We reproduce and extend a multi-agent architecture for clinical error detection, improving few-shot accuracy to 61.64 percent on the MEDEC benchmark compared to a single-agent Gemini 2.0 Flash baseline.
+    
+    \item We perform  evaluation across medical specialties, error categories, and demographic groups, providing insight into reliability, fairness, and subgroup-specific failure patterns.
+    
+    \item We demonstrate empirically that structured debate between agents grounded in complementary medical knowledge sources enhances the detection of subtle clinical errors beyond the capabilities of individual models.
+\end{enumerate}
+
+\noindent Our code and implementation are publicly available.\footnote{\url{https://github.com/Khoa-BOB/BlueMed}}
+
+\section{Background and Related Work}
+
+Maiga et al. (2025) proposed a multi agent debate architecture in which two expert LLMs analyze a medical note independently and present arguments to a judge model. The judge then evaluates the evidence provided by each expert and produces the final decision. Their work showed that multi agent reasoning can reduce certain types of omission and substitution errors that single agent systems frequently overlook, particularly when clinical narratives contain subtle inconsistencies that require domain awareness.
+
+
+The MEDEC dataset \citep{benabacha2024medec} provides a benchmark for clinical error detection and correction, containing more than three thousand annotated clinical notes across five error categories. It is designed to evaluate whether models can identify incorrect yet plausible clinical statements, making it well suited for studying factual reliability in medical NLP.
+
+
+Research in retrieval augmented generation (RAG) shows that grounding language models in external knowledge can significantly improve factual accuracy in biomedical tasks \citep{lewis2020rag,izacard2021leveraging}. Clinical applications benefit from integrating structured resources such as Mayo Clinic and WebMD content, while prior work also notes that large language models frequently hallucinate biomedical facts \citep{ji2023survey}, underscoring the importance of retrieval based methods.
+
+
+Recent studies on multi step and collaborative reasoning further demonstrate that debate prompting, self consistency, and verifier based architectures can reduce reasoning errors in high stakes domains \citep{du2023improving,shinn2023reflexion}. These insights motivate our hybrid multi agent and RAG based approach, which aims to combine explicit medical grounding with structured argumentative reasoning.
+\section{Data and Preprocessing}
+
+\subsection{Knowledge Base}
+We incorporate two complementary sources of medical knowledge to support both stable background understanding and up-to-date clinical information.
+
+\subsubsection{Offline Retrieval-Augmented Knowledge Base}
+
+We collected medical content from Mayo Clinic and WebMD, including information on diseases, symptoms, medications, and supplements. The documents were embedded stored in a vector database. This offline repository enables efficient vector-based nearest-neighbor retrieval during inference.
+
+\subsubsection{Online Retrieval for Real-Time Facts}
+
+To supplement the static knowledge base, the system also performs live web retrieval from Mayo Clinic and WebMD at inference time. This mechanism provides access to current clinical facts and mitigates the risk of relying on outdated or incomplete information.
+\vspace{0.6em}
+
+Together, these two components form a hybrid retrieval pipeline that integrates curated medical knowledge with real-time updates.
+
+\subsection{MEDEC Evaluation Dataset}
+
+MEDEC contains 3,848 annotated clinical notes with five error types: Diagnosis, Management, Treatment, Pharmacotherapy, and Causal Organism. We use the publicly available test split of 597 instances described in \citet{benabacha2024medec}. Each instance includes an identifier, the full clinical narrative, and an error type label for notes containing incorrect statements, along with a binary correctness indicator for error-flagging evaluation. Preprocessing involved standardizing whitespace, normalizing formatting artifacts, and verifying consistency in error type annotations. These steps ensure compatibility with our prompting templates and facilitate robust evaluation across single-agent and multi-agent settings.
+
+\section{Models}
+
+\subsection{Gemini 2.0 Flash}
+
+Gemini 2.0 Flash \citep{gemini2024} serves as the primary language model for all reasoning and generation tasks. The model is configured with a low temperature to encourage stable, factual, and reproducible outputs during clinical decision-making.
+
+\subsection{gemini-embedding-001}
+
+Both documents and medication notes are encoded using the gemini-embedding-001 model, enabling vector-based nearest-neighbor retrieval.
+
+
+
+\section{Experiment Settings}
+
+\subsection{Multi-Agent Debate Architecture}
+
+Following \citet{maiga2025debate}, we reproduce the debate framework consisting of:
+
+\begin{itemize}
+\item \textbf{Expert A}: Grounded on the Mayo Clinic knowledge base.
+\item \textbf{Expert B}: Grounded on the WebMD knowledge base.
+\item \textbf{Judge}: Evaluates arguments from both experts and produces the final decision.
+\item \textbf{Consensus check}: After Round 1, verifies whether both experts agree on classification (CORRECT/INCORRECT) and, if incorrect, on the specific erroneous and corrected terms. Round 2 is skipped when full consensus is reached.
+\end{itemize}
+
+The system performs up to two debate rounds. After Round 1, a consensus check verifies whether both experts agree. If not, a second round of counterarguments is generated. The judge then issues the final prediction. As illustrated in Figure~\ref{fig:workflow}, the debate module follows a structured multi-round process culminating in a final judgment.
+
+\begin{figure*}[t]
+    \centering
+    \includegraphics[width=0.9\linewidth]{BLUEmed_final/figures/high-level.png}
+    \caption{Overview of the BLUEmed multi-agent debate workflow. A medical note is independently analyzed by Expert A, grounded in Mayo Clinic resources, and Expert B, grounded in WebMD resources. Both experts provide initial arguments in Round 1 and counter-arguments in Round 2. A judge model then evaluates all arguments to determine whether the note contains a clinical error.}
+    \label{fig:workflow}
+\end{figure*}
+
+\subsection{Prompting Conditions}
+
+We evaluate both zero-shot prompts and few-shot exemplars sourced from MEDEC training data. Few-shot prompting is intended to guide expert reasoning but may introduce sensitivity to example selection.
+
+\subsection{Hyperparameters}
+\subsection{Model temperatures}
+The expert models are configured with a temperature of 0.2, while the judge operates at a lower temperature of 0.1 to reduce variability and promote more deterministic decisions.
+\subsection{Retrieval Settings}
+Evidence retrieval employs a hybrid approach combining three complementary methods: dense retrieval via ChromaDB vector search, sparse retrieval using BM25 keyword matching, and real-time online search from Mayo Clinic and WebMD. For each query, the dense retriever fetches $k=4$ documents using semantic embeddings, the sparse retriever retrieves $k=4$ documents based on BM25 scores, and the online search contributes $k=3$ documents from direct web crawling.
+
+The rankings from these three sources are fused using Reciprocal Rank Fusion (RRF) with the formula:
+\begin{equation}
+    \text{RRF\_score} = \frac{w}{60 + r + 1}
+\end{equation}
+where $w$ is the source weight and $r$ is the document's rank position. Default weights are set to $w_{\text{dense}}=0.5$, $w_{\text{sparse}}=0.3$, and $w_{\text{online}}=0.2$. Documents appearing in multiple rankings accumulate scores across sources. After deduplication using content fingerprinting (first 200 characters), the top-5 fused documents are provided separately to Expert A (Mayo Clinic-grounded) and Expert B (WebMD-grounded) for argument generation.
+
+\subsection{Evaluation Metrics}
+
+We evaluate system performance using accuracy and recall for error-flag detection and supplement these with confidence-based and threshold-independent metrics.  
+
+Confidence scores (ranging from 1 to 10) provide a measure of predictive certainty and help identify cases where the model may require human oversight. To assess discrimination independent of any particular threshold, we report ROC–AUC, which captures how well the system separates correct from incorrect clinical notes across all decision cutoffs. This metric is especially useful under class imbalance or when error severity varies.
+
+\subsection{Baselines}
+
+We compare against single agent LLM performance reported in \citet{benabacha2024medec}. The Gemini 2.0 Flash baseline scores 0.5805 accuracy for error flagging.
+
+\section{Results}
+
+\subsection{Single-Agent vs Multi-Agent Performance}
+\subsubsection{Single-Agent Performance}
+Table~\ref{tab:bluemedscores} summarizes single-agent results under both grounding sources. 
+Zero-shot prompting yields comparable accuracy across Mayo and WebMD, with WebMD achieving higher recall. 
+Few-shot prompting does not substantially improve accuracy and leads to reduced recall for both experts, suggesting sensitivity to example-specific cues.
+
+\subsubsection{Multi-Agent Debate Performance}
+As shown in Table~\ref{tab:bluemedscores}, the multi-agent debate framework significantly improves performance in the few-shot setting, surpassing all single-agent baselines. 
+Zero-shot debate results, however, remain lower, indicating instability when experts construct arguments without exemplar guidance.
+
+\begin{table*}[t]
+  \centering
+  \begin{tabular}{lcccc}
+    \hline
+    \textbf{Method} & \textbf{Accuracy} & \textbf{Recall} & \textbf{ROC-AUC} & \textbf{P-value} \\
+    \hline
+    \multicolumn{5}{l}{\textbf{Single-Agent}} \\
+    WebMD (Zero-Shot) & -- & -- & -- & -- \\
+    Mayo (Zero-Shot)  & -- & -- & -- & -- \\
+    \hline
+    \multicolumn{5}{l}{\textbf{Few-Shot}} \\
+    WebMD Few-Shot & -- & -- & -- & -- \\
+    Mayo Few-Shot  & -- & -- & -- & -- \\
+    \hline
+    \multicolumn{5}{l}{\textbf{Multi-Agent Baselines}} \\
+    MDAgent & -- & -- & -- & -- \\
+    AutoGen & -- & -- & -- & -- \\
+    \hline
+    \multicolumn{5}{l}{\textbf{Proposed (BLUEmed)}} \\
+    Expert A (Mayo)  & -- & -- & -- & -- \\
+    Expert B (WebMD) & -- & -- & -- & -- \\
+    \textbf{BLUEmed (Full)} & \textbf{--} & \textbf{--} & \textbf{--} & -- \\
+    \hline
+  \end{tabular}
+  \caption{Comparison of baseline and BLUEmed systems. Metrics include accuracy, ROC--AUC, confidence, and McNemar p-values.}
+  \label{tab:bluemedscores}
+\end{table*}
+
+
+\subsection{Error Type Analysis}
+
+Diagnosis errors achieved the highest accuracy around 82.8 percent. Management errors and notes categorized as N/A yielded lower accuracy values, partly due to limited representation. Treatment and pharmacotherapy errors produced mid-range performance.
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=\linewidth]{BLUEmed_final/figures/error_type_analysis.png}
+    \caption{Accuracy across MEDEC error types.}
+\end{figure}
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=\linewidth]{BLUEmed_final/figures/specialty_analysis.png}
+    \caption{Performance by clinical specialty.}
+\end{figure}
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=\linewidth]{BLUEmed_final/figures/age_gender_analysis.png}
+    \caption{Demographic error patterns.}
+\end{figure}
+
+\subsection{Specialty and Demographic Analysis}
+
+Accuracy varied across medical specialties with the highest performance in Infectious Disease (approximately 68.5 percent) and the lowest in Gastrointestinal cases (approximately 52.8 percent). Demographically, pediatric males showed the highest accuracy at 75 percent while middle aged males exhibited lower accuracy.
+
+
+
+\section{Discussion and Takeaways}
+\subsection{Key Findings}
+Our reproduction confirms several of the original study’s findings. Multi-agent debate with few-shot prompting improves error-flagging accuracy compared to the single-agent Gemini 2.0 Flash baseline, demonstrating the value of structured multi-perspective reasoning. The debate process exposes subtle inconsistencies between experts and enables the judge to synthesize stronger, more reliable conclusions. These results highlight the potential of debate-based architectures to enhance clinical reasoning in LLM systems.
+\subsection{Limitations}
+However, the system has limitations including computational overhead because each instance requires multiple LLM calls. Performance also depends heavily on the quality and coverage of retrieved medical knowledge. Certain specialties and error types remain challenging for the model.
+
+
+\section*{Limitations}
+
+Despite the improvements observed, the approach has several limitations. The multi-agent debate pipeline incurs substantial computational overhead, as each instance requires multiple LLM calls across experts and the judge. Model performance is also constrained by our reliance on Gemini 2.0 Flash, which underperforms stronger frontier models such as Claude 3.5 Sonnet and GPT-4.0 in single-agent settings. In addition, the MEDEC test split used in our experiments contains imbalanced error-type distributions, which limits the robustness of per-category evaluations. Retrieval coverage represents another bottleneck: our evidence sources are restricted to Mayo Clinic and WebMD, which do not encompass the full breadth of clinical terminology or specialty-specific knowledge. Finally, computational budget constraints prevented exploration of larger models or extended debate configurations that may further improve performance.
+
+% \section*{Acknowledgments}
+
+% We thank the University of Memphis ..... itiger ....
+
+
+% Bibliography entries for the entire Anthology, followed by custom entries
+%\bibliography{anthology,custom}
+% Custom bibliography entries only
+\bibliography{custom}
+
+\appendix
+\section{System Architecture and Implementation Technologies}
+\label{sec:appendix:system-architecture}
+
+This appendix provides a comprehensive overview of the BLUEmed system architecture and the technologies employed at each layer.
+
+\begin{figure*}[t]
+    \centering
+    \includegraphics[width=0.95\linewidth]{BLUEmed_final/figures/lowlevel.png}
+    \caption{Detailed system architecture of BLUEmed showing the complete pipeline from user input to clinical decision. The architecture integrates smart query processing, hybrid knowledge retrieval, and multi-agent debate reasoning.}
+    \label{fig:appendix:architecture}
+\end{figure*}
+
+\subsection{System Overview}
+
+Figure~\ref{fig:appendix:architecture} illustrates the complete BLUEmed pipeline, which integrates multiple state-of-the-art technologies to perform clinical error detection through evidence-grounded multi-agent reasoning. The system is organized into four primary layers: user interface, smart query processing, knowledge retrieval, and multi-agent debate.
+
+\subsection{User Interface Layer}
+
+The system provides two access modalities to accommodate different use cases:
+
+\paragraph{Command-Line Interface (CLI)}
+A terminal-based interface designed for batch processing, scripting, and integration with automated clinical workflows. The CLI accepts clinical notes as input and returns structured JSON output containing the error flag, confidence score, expert arguments, and retrieved evidence.
+
+\paragraph{Web User Interface (Web UI)}
+An interactive web application built for clinical practitioners and researchers. The interface provides real-time visualization of the debate process, displaying retrieved evidence, expert arguments from both rounds, and the judge's final reasoning. Users can explore the evidence sources and trace the decision-making process.
+
+\subsection{Smart Query Processing}
+
+User input undergoes preprocessing before retrieval to optimize evidence gathering:
+
+\paragraph{Clinical Entity Extraction}
+The system identifies medical entities in the input note, including:
+\begin{itemize}
+    \item Disease conditions and diagnoses
+    \item Medications and drug names
+    \item Symptoms and clinical presentations
+    \item Treatment procedures and interventions
+    \item Laboratory tests and diagnostic procedures
+\end{itemize}
+
+Entity recognition is performed using pattern matching and medical terminology dictionaries, enabling downstream category-specific retrieval filtering.
+
+\paragraph{Query Decomposition}
+Complex clinical notes are decomposed into targeted subqueries focused on specific medical aspects. For example, a note mentioning both a diagnosis and medication regimen would generate separate queries for disease information and pharmacological guidance. This decomposition strategy improves retrieval precision by matching subqueries to specialized document categories.
+
+\subsection{Knowledge Layer Technologies}
+
+The knowledge layer implements a hybrid retrieval architecture combining offline vector databases with real-time web search:
+
+\paragraph{Embedding Model: \texttt{gemini-embedding-001}}
+All textual content—both clinical notes and knowledge base documents—is encoded using Google's \texttt{gemini-embedding-001} model. This embedding model generates 768-dimensional dense vectors that capture semantic relationships between medical concepts. The model was selected for its strong performance on biomedical terminology and clinical language understanding.
+
+\paragraph{ChromaDB Vector Database}
+Medical knowledge is stored in ChromaDB, an open-source vector database optimized for semantic similarity search. The database contains two separate collections:
+\begin{itemize}
+    \item \textbf{Mayo Clinic}: 76,271 document chunks covering diseases, symptoms, medications, and clinical procedures from Mayo Clinic medical content
+    \item \textbf{WebMD}: 69,831 document chunks providing patient-education-oriented medical information from WebMD
+\end{itemize}
+
+Documents are chunked using a fixed-size strategy to maintain consistent retrieval granularity. Each chunk includes metadata tags for category filtering (\texttt{diseases\_conditions}, \texttt{drugs\_supplements}, \texttt{symptoms}).
+
+\paragraph{Dense Retrieval (Vector Search)}
+For each query or subquery, the system performs semantic similarity search using cosine distance over the embedding space. The retriever returns the top-$k=4$ most similar document chunks, leveraging the dense vector representations to capture conceptual matches beyond exact keyword overlap.
+
+\paragraph{Sparse Retrieval (BM25Okapi)}
+In parallel with dense retrieval, the system performs keyword-based search using the BM25Okapi algorithm. BM25 is a probabilistic ranking function that scores documents based on term frequency, inverse document frequency, and document length normalization. Separate BM25 indices are maintained for Mayo Clinic and WebMD collections, with lazy index construction upon first query. The sparse retriever returns the top-$k=4$ documents, capturing exact medical terminology and acronyms that may be underrepresented in dense embeddings.
+
+\paragraph{Online Browser (Real-Time Web Crawling)}
+To incorporate up-to-date medical information not available in the offline databases, the system performs real-time web scraping of \texttt{mayo.org} and \texttt{webmd.com}. For each query, the online browser:
+\begin{enumerate}
+    \item Constructs search-optimized queries from extracted clinical entities
+    \item Directly crawls authoritative medical websites (bypassing third-party search APIs to avoid rate limiting)
+    \item Parses HTML content to extract textual information while preserving structural context
+    \item Returns the top-$k=3$ most relevant web pages
+\end{enumerate}
+
+Online search is applied only to the first query in multi-query scenarios to balance information freshness with computational efficiency.
+
+\paragraph{Reciprocal Rank Fusion (RRF)}
+The three retrieval sources (dense, sparse, online) produce independent ranked lists, which are merged using Reciprocal Rank Fusion. RRF assigns scores based on rank position and source weight:
+\begin{equation}
+    \text{score}_i(d) = \frac{w_i}{60 + r_i + 1}
+\end{equation}
+where $w_i$ is the source weight ($w_{\text{dense}}=0.5$, $w_{\text{sparse}}=0.3$, $w_{\text{online}}=0.2$) and $r_i$ is the document's rank in source $i$. Documents appearing in multiple sources accumulate scores, promoting cross-source agreement. After deduplication via content fingerprinting, the top-5 fused documents are selected.
+
+\subsection{Multi-Agent Debate Layer}
+
+The debate layer implements structured multi-perspective reasoning using three specialized agents, orchestrated via the LangGraph framework.
+
+\paragraph{LangChain and LangGraph Framework}
+BLUEmed leverages LangChain and LangGraph for agent orchestration and workflow management. LangChain (version 1.0.5) provides abstractions for LLM interactions, prompt templates, and retrieval chain composition, while LangGraph (version 1.0.3) enables stateful, cyclic graph-based workflows that support conditional routing and parallel agent execution.
+
+The debate workflow is implemented as a \texttt{StateGraph} that manages the \texttt{MedState} typed dictionary, which tracks:
+\begin{itemize}
+    \item Current debate round (1 or 2)
+    \item Medical note being analyzed
+    \item Arguments from Expert A and Expert B for each round
+    \item Retrieved documents for each expert
+    \item Judge's final decision and confidence score
+\end{itemize}
+
+The graph defines conditional edges for consensus checking: if both experts agree in Round 1 on both the classification (CORRECT/INCORRECT) and the specific error terms, the system skips Round 2 and proceeds directly to the judge. Otherwise, Round 2 counterarguments are generated. This state-based routing enables efficient early termination when consensus is reached while ensuring thorough debate when disagreements arise.
+
+Expert nodes run in parallel within each round to maximize throughput, with LangGraph automatically managing concurrency and state synchronization. The framework's checkpoint system could support conversation persistence and debugging, though not utilized in the current evaluation setup.
+
+\paragraph{Expert A (Mayo Clinic-Grounded)}
+Expert A is instantiated as a Gemini 2.0 Flash model configured with temperature=0.2 to encourage factual, reproducible reasoning. This agent receives the top-5 retrieved documents from Mayo Clinic sources and generates clinical arguments from an authoritative medical perspective. Mayo Clinic content emphasizes evidence-based clinical guidelines and specialist-level medical knowledge.
+
+\paragraph{Expert B (WebMD-Grounded)}
+Expert B uses the same Gemini 2.0 Flash configuration but receives evidence exclusively from WebMD sources. WebMD content provides patient-education-oriented explanations and practical clinical information, offering a complementary perspective that may highlight patient-facing considerations or alternative interpretations.
+
+\paragraph{Two-Round Debate Protocol}
+The debate proceeds as follows:
+\begin{enumerate}
+    \item \textbf{Round 1}: Both experts independently analyze the clinical note and their respective evidence, generating initial arguments for whether the note contains an error
+    \item \textbf{Consensus Check}: If both experts agree on the verdict, the debate terminates early
+    \item \textbf{Round 2}: If experts disagree, each generates a counterargument addressing the opposing expert's reasoning and providing additional evidence
+    \item \textbf{Judgment}: The judge evaluates all arguments from both rounds
+\end{enumerate}
+
+\paragraph{Judge Model (No Note Access)}
+The judge is a separate Gemini 2.0 Flash instance configured with a lower temperature (0.1) to reduce variability in final decisions. Critically, the judge does \emph{not} receive the original clinical note—only the expert arguments and retrieved evidence. This design ensures that the final decision is based on explicit reasoning and evidence rather than implicit pattern matching from the input text. The judge outputs:
+\begin{itemize}
+    \item Binary error flag (correct/incorrect)
+    \item Confidence score (1--10 scale)
+    \item Justification synthesizing both experts' arguments
+\end{itemize}
+
+\paragraph{Hybrid Safety Validation}
+The staged debate process with independent evidence grounding provides multiple validation checkpoints: initial expert analysis, cross-examination through counterarguments, and final synthesis by a neutral judge. This architecture mitigates single-model biases and hallucination risks while promoting evidence-backed reasoning.
+
+\subsection{Output Layer}
+
+The final system output includes:
+\begin{itemize}
+    \item \textbf{Final Decision}: Binary error flag indicating whether the clinical note contains errors
+    \item \textbf{Confidence Score}: Numeric confidence (1--10) reflecting decision certainty
+    \item \textbf{Expert Arguments}: Complete text of Round 1 and Round 2 arguments from both experts
+    \item \textbf{Retrieved Evidence}: All documents retrieved from Mayo Clinic and WebMD sources
+    \item \textbf{Judge Justification}: Reasoning explaining how the judge synthesized expert arguments
+\end{itemize}
+
+This comprehensive output enables clinical users to audit the decision-making process and understand the evidentiary basis for each prediction.
+
+\subsection{Implementation Summary}
+
+Table~\ref{tab:technologies} summarizes the key technologies employed in BLUEmed.
+
+\begin{table}[h]
+\centering
+\begin{tabular}{ll}
+\hline
+\textbf{Component} & \textbf{Technology} \\
+\hline
+Language Model & Gemini 2.0 Flash \\
+Embedding Model & gemini-embedding-001 \\
+Agent Orchestration & LangGraph 1.0.3 \\
+LLM Framework & LangChain 1.0.5 \\
+Vector Database & ChromaDB 1.3.4 \\
+Sparse Retrieval & BM25Okapi (rank-bm25) \\
+Rank Fusion & Reciprocal Rank Fusion \\
+Web Crawling & BeautifulSoup4 + Direct HTML parsing \\
+Entity Extraction & Pattern matching + dictionaries \\
+Query Processing & Custom decomposition logic \\
+User Interfaces & CLI + Streamlit Web UI \\
+\hline
+\end{tabular}
+\caption{Technologies and methods employed in BLUEmed system components.}
+\label{tab:technologies}
+\end{table}
+
+\end{document}

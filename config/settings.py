@@ -11,6 +11,14 @@ class Settings(BaseSettings):
     # Google Gemini API
     GOOGLE_API_KEY: str = ""
     GEMINI_MODEL: str = "gemini-2.0-flash"
+    
+    # OpenAI GPT API
+    OPENAI_API_KEY: str = ""
+    GPT_MODEL: str = "gpt-4o-mini"
+    
+    # HuggingFace API (for inference endpoints)
+    HUGGINGFACE_API_KEY: str = ""
+    HUGGINGFACE_MODEL: str = "meta-llama/Meta-Llama-3-8B-Instruct"
 
     # Embedding Model for RAG
     GOOGLE_API_KEY_EMBED: str = ""
