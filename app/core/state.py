@@ -25,4 +25,11 @@ class MedState(TypedDict):
 
     # Judge decision
     judge_decision: Optional[str]
+    judge_retrieved_mayo_docs: Optional[List[str]]  # Mayo Clinic docs for judge
+    judge_retrieved_webmd_docs: Optional[List[str]]  # WebMD docs for judge
     final_answer: Optional[str]  # CORRECT or INCORRECT
+
+    # Weighted voting (optional)
+    weighted_decision: Optional[dict]  # Contains weighted voting results
+    expert_a_classification: Optional[str]  # Expert A's classification
+    expert_b_classification: Optional[str]  # Expert B's classification

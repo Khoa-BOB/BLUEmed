@@ -4,6 +4,10 @@ from app.agents.expertA import expertA_node
 from app.agents.expertB import expertB_node
 from app.agents.judge import Judge_node
 from app.llm.factory import build_llm
+from app.utils.weighted_voting import (
+    calculate_weighted_decision,
+    print_weighted_decision_summary,
+)
 from functools import partial
 
 
@@ -105,6 +109,43 @@ def should_continue_debate(state: MedState) -> str:
         return "continue"
 
 
+def apply_weighted_voting(state: MedState) -> dict:
+    """
+    Apply weighted voting to combine expert and judge decisions.
+    Optional node - only used if USE_WEIGHTED_VOTING is enabled.
+    """
+    from config.settings import settings
+
+    if not settings.USE_WEIGHTED_VOTING:
+        return {}
+
+    judge_classification = state.get("final_answer", "UNKNOWN")
+    expert_a_args = state.get("expertA_arguments", [])
+    expert_b_args = state.get("expertB_arguments", [])
+
+    # Calculate weighted decision
+    weighted_result = calculate_weighted_decision(
+        judge_classification=judge_classification,
+        expert_a_arguments=expert_a_args,
+        expert_b_arguments=expert_b_args
+    )
+
+    # Print summary
+    print_weighted_decision_summary(weighted_result)
+
+    # Extract expert classifications for state
+    expert_a_class = weighted_result["individual_classifications"]["expert_a"]
+    expert_b_class = weighted_result["individual_classifications"]["expert_b"]
+
+    # Override final answer with weighted decision
+    return {
+        "weighted_decision": weighted_result,
+        "expert_a_classification": expert_a_class,
+        "expert_b_classification": expert_b_class,
+        "final_answer": weighted_result["final_decision"]
+    }
+
+
 def build_graph(config) -> StateGraph:
     """
     Build the multi-agent debate graph.
@@ -160,7 +201,13 @@ def build_graph(config) -> StateGraph:
     builder.add_edge("expertA_round2", "judge")
     builder.add_edge("expertB_round2", "judge")
 
-    builder.add_edge("judge", END)
+    # Add weighted voting layer (optional, configured via settings)
+    if config.USE_WEIGHTED_VOTING:
+        builder.add_node("weighted_voting", apply_weighted_voting)
+        builder.add_edge("judge", "weighted_voting")
+        builder.add_edge("weighted_voting", END)
+    else:
+        builder.add_edge("judge", END)
 
     # Compile without checkpointing (results saved as markdown logs instead)
     return builder.compile()

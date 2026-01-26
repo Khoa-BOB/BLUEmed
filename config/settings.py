@@ -27,8 +27,17 @@ class Settings(BaseSettings):
     # RAG Retrieval Toggle
     USE_RETRIEVER: bool = False  # Set to True to enable RAG retrieval
 
+    # Judge Retrieval Toggle (optional access to WebMD and Mayo Clinic)
+    USE_JUDGE_RETRIEVER: bool = False  # Set to True to give judge access to knowledge bases
+
     # Force rebuild vector databases (even if they already exist)
     FORCE_REBUILD: bool = False  # Set to True to force rebuild databases
+
+    # Weighted Voting System (optional)
+    USE_WEIGHTED_VOTING: bool = False  # Set to True to use weighted decision making
+    WEIGHT_JUDGE: float = 0.4  # Judge weight (default 40%)
+    WEIGHT_EXPERT_A: float = 0.3  # Mayo Clinic expert weight (default 30%)
+    WEIGHT_EXPERT_B: float = 0.3  # WebMD expert weight (default 30%)
 
     # Vector build performance settings (optimized for paid tier)
     EMBED_BATCH_SIZE: int = 500  # Chunks per batch (500 for paid, 100 for free tier)
