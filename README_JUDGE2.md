@@ -141,6 +141,84 @@ python evaluation/scripts/evaluate.py --results-dir logs/debates
 - Error type breakdown per expert
 - Recommended optimal weights
 
+### 4. Confidence Score Calculation
+
+The judge evaluates experts using a structured scoring system:
+
+#### Decision Process
+
+```
+1. If BOTH experts agree → Use their consensus with high confidence
+
+2. If experts disagree, evaluate each expert on:
+   A. Did they quote a specific wrong term? (0 or 1)
+   B. Did they name a specific correct term? (0 or 1)
+   C. Are the terms mutually exclusive (not synonyms)? (0 or 1)
+   D. Did they explain clinical impact? (0 or 1)
+   E. Were they consistent across rounds? (0 or 1)
+
+3. Winner = expert with higher score (if tied, prefer CORRECT classification)
+```
+
+#### Expert Scoring Criteria (0-5 points each)
+
+| Criterion | Question | Points |
+|-----------|----------|--------|
+| **A** | Did they quote a specific wrong term? | 0 or 1 |
+| **B** | Did they name a specific correct term? | 0 or 1 |
+| **C** | Are the terms mutually exclusive (not synonyms)? | 0 or 1 |
+| **D** | Did they explain clinical impact? | 0 or 1 |
+| **E** | Were they consistent across rounds? | 0 or 1 |
+
+**Synonym Consideration:** If an expert claims INCORRECT but the terms could be synonyms or valid alternatives, their score on criterion C = 0.
+
+#### Confidence Score (1-10)
+
+| Scenario | Starting Score | Adjustments |
+|----------|----------------|-------------|
+| Both experts agree | **7** | +/- for argument strength |
+| Experts disagree | **4** | +/- for reasoning quality |
+
+**Adjustments:**
+- Strong, well-supported arguments → Add points
+- Weak reasoning or missing evidence → Subtract points
+
+#### Judge Output Format
+
+```json
+{
+  "Final Answer": "CORRECT" or "INCORRECT",
+  "Winner": "Expert A" or "Expert B" or "Neither",
+  "Confidence Score": 1-10,
+  "Expert A Score": 0-5,
+  "Expert B Score": 0-5,
+  "Score Breakdown": {
+    "Expert A": {"A": 0/1, "B": 0/1, "C": 0/1, "D": 0/1, "E": 0/1},
+    "Expert B": {"A": 0/1, "B": 0/1, "C": 0/1, "D": 0/1, "E": 0/1}
+  },
+  "Reasoning": "Brief explanation"
+}
+```
+
+#### Weighted Voting Confidence (Optional)
+
+When `USE_WEIGHTED_VOTING=True`, an additional confidence layer is calculated:
+
+```python
+# weighted_score: 0.0 = all CORRECT, 1.0 = all INCORRECT
+weighted_score = (judge * 0.4) + (expert_a * 0.3) + (expert_b * 0.3)
+
+# Confidence = how far from the 0.5 decision threshold
+voting_confidence = abs(weighted_score - 0.5) * 2.0  # Scale to 0-100%
+```
+
+| Agreement | Weighted Score | Voting Confidence |
+|-----------|----------------|-------------------|
+| All agree INCORRECT | 1.0 | 100% |
+| All agree CORRECT | 0.0 | 100% |
+| 2 vs 1 split | ~0.7 | ~40% |
+| Perfect split | 0.5 | 0% |
+
 ---
 
 ## Evaluation Output Example
