@@ -74,15 +74,16 @@ LOGGING.md
 # --- Misc ---
 context/
 BlueMed_data
+test_data/
 
 midterm_report
 result_logger.py
 
-evaluation/results/
-evaluation/results_v*/
-evaluation/fairness/
-evaluation/__pycache__/
-evaluation/*.json
+evaluation/
+!evaluation/scripts/
+evaluation/scripts/*
+!evaluation/scripts/batch_predict.py
+!evaluation/scripts/evaluate.py
 
 # --- Temporary files ---
 tempCodeRunnerFile.py
