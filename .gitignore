@@ -84,6 +84,7 @@ evaluation/
 evaluation/scripts/*
 !evaluation/scripts/batch_predict.py
 !evaluation/scripts/evaluate.py
+!evaluation/scripts/run_evaluation.py
 
 # --- Temporary files ---
 tempCodeRunnerFile.py
