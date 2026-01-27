@@ -1,6 +1,7 @@
 from app.core.state import MedState
 from app.core.prompts import JUDGE_SYSTEM
 from app.utils.safety_rules import hybrid_safety_predict
+from app.rag.judge_retriever import retrieve_judge_knowledge, format_judge_knowledge
 from langchain_core.messages import SystemMessage, HumanMessage
 import json
 
@@ -27,6 +28,21 @@ def Judge_node(state: MedState, llm) -> dict:
     for arg in expertB_args:
         prompt_parts.append(f"\nRound {arg['round']}:")
         prompt_parts.append(arg['content'])
+
+    # Optionally retrieve knowledge for the judge to verify expert claims
+    medical_note = state.get("medical_note", "")
+    expert_a_arg_texts = [arg['content'] for arg in expertA_args]
+    expert_b_arg_texts = [arg['content'] for arg in expertB_args]
+
+    mayo_docs, webmd_docs = retrieve_judge_knowledge(
+        medical_note=medical_note,
+        expert_a_args=expert_a_arg_texts,
+        expert_b_args=expert_b_arg_texts,
+    )
+
+    knowledge_context = format_judge_knowledge(mayo_docs, webmd_docs)
+    if knowledge_context:
+        prompt_parts.append(knowledge_context)
 
     prompt_parts.append("\n\nNow evaluate both experts' arguments and make your final decision.")
     prompt_parts.append("Respond in JSON format as specified in your instructions.")
@@ -82,9 +98,6 @@ def Judge_node(state: MedState, llm) -> dict:
     # ========================================
     # APPLY HYBRID SAFETY LAYER
     # ========================================
-
-    # Get the medical note from state
-    medical_note = state.get("medical_note", "")
 
     # Combine expert arguments for analysis
     expertA_content = "\n".join([arg['content'] for arg in expertA_args])
@@ -154,5 +167,7 @@ def Judge_node(state: MedState, llm) -> dict:
     return {
         "judge_decision": resp.content,
         "final_answer": final_classification,
-        "safety_diagnostics": safety_result
+        "safety_diagnostics": safety_result,
+        "judge_retrieved_mayo_docs": mayo_docs,
+        "judge_retrieved_webmd_docs": webmd_docs,
     }
