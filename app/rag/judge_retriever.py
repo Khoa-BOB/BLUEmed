@@ -48,10 +48,13 @@ Expert B Claims: {' '.join(expert_b_args)}
 
 Verify these claims and provide authoritative medical knowledge."""
 
-    print(f"\n[Judge Retriever] Fetching knowledge from both sources...")
-    print(f"  Primary category: {primary_cat}, Secondary: {secondary_cat}")
+    print(f"\n{'='*60}")
+    print(f"[Judge] Retriever - Fetching knowledge from BOTH sources")
+    print(f"[Judge] Primary category: {primary_cat}, Secondary: {secondary_cat}")
+    print(f"{'='*60}")
 
     # Retrieve from Mayo Clinic (Expert A's source)
+    print(f"\n[Judge] Retrieving from Mayo Clinic...")
     mayo_docs = smart_hybrid_retriever.retrieve_with_decomposition(
         note=judge_query,
         expert="A",  # Mayo Clinic
@@ -59,10 +62,12 @@ Verify these claims and provide authoritative medical knowledge."""
         max_total=max_docs // 2,
         use_dense=True,
         use_sparse=True,
-        use_online=False  # Use only local knowledge for judge
+        use_online=False,  # Use only local knowledge for judge
+        caller="Judge"
     )
 
     # Retrieve from WebMD (Expert B's source)
+    print(f"\n[Judge] Retrieving from WebMD...")
     webmd_docs = smart_hybrid_retriever.retrieve_with_decomposition(
         note=judge_query,
         expert="B",  # WebMD
@@ -70,10 +75,12 @@ Verify these claims and provide authoritative medical knowledge."""
         max_total=max_docs // 2,
         use_dense=True,
         use_sparse=True,
-        use_online=False  # Use only local knowledge for judge
+        use_online=False,  # Use only local knowledge for judge
+        caller="Judge"
     )
 
-    print(f"  Retrieved {len(mayo_docs)} Mayo Clinic docs, {len(webmd_docs)} WebMD docs")
+    print(f"\n[Judge] Summary: {len(mayo_docs)} Mayo Clinic docs, {len(webmd_docs)} WebMD docs")
+    print(f"{'='*60}\n")
 
     return mayo_docs, webmd_docs
 

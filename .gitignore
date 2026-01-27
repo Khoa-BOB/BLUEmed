@@ -63,7 +63,7 @@ project_idea
 
 Notes/
 
-scripts/
+/scripts/
 
 tests/
 
@@ -78,7 +78,11 @@ BlueMed_data
 midterm_report
 result_logger.py
 
-evaluation/
+evaluation/results/
+evaluation/results_v*/
+evaluation/fairness/
+evaluation/__pycache__/
+evaluation/*.json
 
 # --- Temporary files ---
 tempCodeRunnerFile.py

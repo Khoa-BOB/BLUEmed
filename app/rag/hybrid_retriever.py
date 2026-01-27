@@ -256,7 +256,8 @@ class HybridMedicalRetriever:
         filter_category: str = None,
         use_dense: bool = True,
         use_sparse: bool = True,
-        use_online: bool = True
+        use_online: bool = True,
+        caller: str = None
     ) -> List[Document]:
         """
         Perform hybrid retrieval combining dense, sparse, and online search.
@@ -269,12 +270,19 @@ class HybridMedicalRetriever:
             use_dense: Whether to use dense vector search
             use_sparse: Whether to use sparse BM25 search
             use_online: Whether to use online web search
+            caller: Optional caller identifier for logging (e.g., "Expert A", "Judge")
 
         Returns:
             List of Documents ranked by fused scores
         """
+        # Determine caller label for logging
+        if caller:
+            caller_label = caller
+        else:
+            caller_label = "Expert A" if expert == "A" else "Expert B"
+
         expert_name = "Mayo Clinic" if expert == "A" else "WebMD"
-        print(f"\n[Hybrid Retriever - {expert_name}] Query: {query[:100]}...")
+        print(f"    [{caller_label}] Hybrid query ({expert_name}): {query[:60]}...")
 
         rankings = []
         weights = []
@@ -291,7 +299,7 @@ class HybridMedicalRetriever:
             dense_ranking = [(doc, 1.0 / (i + 1)) for i, doc in enumerate(dense_docs)]
             rankings.append(dense_ranking)
             weights.append(self.dense_weight)
-            print(f"  ✓ Dense: {len(dense_docs)} docs")
+            print(f"      [{caller_label}] ✓ Dense: {len(dense_docs)} docs")
 
         # 2. Sparse retrieval (BM25)
         if use_sparse:
@@ -303,7 +311,7 @@ class HybridMedicalRetriever:
             )
             rankings.append(sparse_ranking)
             weights.append(self.sparse_weight)
-            print(f"  ✓ Sparse (BM25): {len(sparse_ranking)} docs")
+            print(f"      [{caller_label}] ✓ Sparse (BM25): {len(sparse_ranking)} docs")
 
         # 3. Online search
         if use_online and self.use_online:
@@ -315,7 +323,7 @@ class HybridMedicalRetriever:
             if online_ranking:
                 rankings.append(online_ranking)
                 weights.append(self.online_weight)
-                print(f"  ✓ Online: {len(online_ranking)} docs")
+                print(f"      [{caller_label}] ✓ Online: {len(online_ranking)} docs")
 
         # Fuse rankings using RRF
         if not rankings:
@@ -325,7 +333,7 @@ class HybridMedicalRetriever:
 
         # Return top k documents
         final_docs = [doc for doc, _score in fused_results[:k]]
-        print(f"[Hybrid Retriever - {expert_name}] Returned {len(final_docs)} fused documents\n")
+        print(f"      [{caller_label}] Fused {len(final_docs)} docs from {expert_name}")
 
         return final_docs
 

@@ -41,7 +41,8 @@ def expertA_node(state: MedState, llm) -> dict:
                     expert="A",
                     k_per_query=k_per_query,
                     max_total=primary_max,
-                    filter_category=primary_cat
+                    filter_category=primary_cat,
+                    caller="Expert A"
                 )
 
                 secondary_docs = smart_hybrid_retriever.retrieve_with_decomposition(
@@ -49,7 +50,8 @@ def expertA_node(state: MedState, llm) -> dict:
                     expert="A",
                     k_per_query=k_per_query,
                     max_total=secondary_max,
-                    filter_category=secondary_cat
+                    filter_category=secondary_cat,
+                    caller="Expert A"
                 )
 
                 retrieved_docs = primary_docs + secondary_docs
@@ -61,7 +63,8 @@ def expertA_node(state: MedState, llm) -> dict:
                     max_total=5,
                     use_dense=True,  # Vector search
                     use_sparse=True,  # BM25 keyword search
-                    use_online=True   # Online web search
+                    use_online=True,  # Online web search
+                    caller="Expert A"
                 )
         else:
             # Round 2+: Reuse documents from state

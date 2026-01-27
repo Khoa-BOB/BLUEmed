@@ -45,7 +45,8 @@ class SmartHybridRetriever:
         use_dense: bool = True,
         use_sparse: bool = True,
         use_online: bool = True,
-        max_online_queries: int = 1  # Limit online searches to first N queries
+        max_online_queries: int = 1,  # Limit online searches to first N queries
+        caller: str = None  # Optional: "Expert A", "Expert B", "Judge" for logging
     ) -> List[Document]:
         """
         Retrieve documents using query decomposition + hybrid search.
@@ -60,12 +61,19 @@ class SmartHybridRetriever:
             use_sparse: Whether to use sparse BM25 search
             use_online: Whether to use online web search
             max_online_queries: Maximum number of queries to search online (to reduce rate limits)
+            caller: Optional caller identifier for logging (e.g., "Expert A", "Judge")
 
         Returns:
             List of relevant documents (deduplicated)
         """
         # Decompose into focused queries
         queries = self.smart_decomposer.decompose_query(note)
+
+        # Determine caller label for logging
+        if caller:
+            caller_label = caller
+        else:
+            caller_label = "Expert A" if expert == "A" else "Expert B"
 
         expert_name = "Mayo Clinic" if expert == "A" else "WebMD"
         filter_msg = f" (filtered: {filter_category})" if filter_category else ""
@@ -79,12 +87,12 @@ class SmartHybridRetriever:
             methods.append("online")
         methods_str = "+".join(methods)
 
-        print(f"\n[Smart Hybrid Retriever - {expert_name}]")
-        print(f"  Decomposed into {len(queries)} queries")
-        print(f"  Using: {methods_str} search{filter_msg}")
+        print(f"\n  [{caller_label}] Smart Hybrid Retriever - {expert_name}")
+        print(f"  [{caller_label}] Decomposed into {len(queries)} queries")
+        print(f"  [{caller_label}] Using: {methods_str} search{filter_msg}")
 
         for i, q in enumerate(queries[:5], 1):  # Show first 5
-            print(f"    {i}. {q[:80]}...")
+            print(f"    [{caller_label}] {i}. {q[:80]}...")
 
         # Retrieve for each query using hybrid search
         all_docs = []
@@ -101,7 +109,8 @@ class SmartHybridRetriever:
                 filter_category=filter_category,
                 use_dense=use_dense,
                 use_sparse=use_sparse,
-                use_online=use_online_for_this_query
+                use_online=use_online_for_this_query,
+                caller=caller_label
             )
 
             # Deduplicate based on content
@@ -120,7 +129,7 @@ class SmartHybridRetriever:
             if len(all_docs) >= max_total:
                 break
 
-        print(f"[Smart Hybrid Retriever - {expert_name}] Retrieved {len(all_docs)} unique documents\n")
+        print(f"  [{caller_label}] Retrieved {len(all_docs)} unique documents from {expert_name}\n")
         return all_docs[:max_total]
 
 
