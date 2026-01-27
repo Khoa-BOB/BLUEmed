@@ -434,8 +434,9 @@ class Evaluator:
         """
         Analyze what weights would optimize accuracy based on historical performance.
 
-        This simulates different weight combinations for Expert A, Expert B, and
-        determines optimal thresholds based on when each expert was correct.
+        Computes recommended weights for all three voters: Judge, Expert A, and Expert B.
+        The judge's accuracy is the overall system accuracy (since it makes the final call).
+        Expert accuracies are based on correctness when each expert's argument won.
 
         Returns:
             Dictionary with optimal weight analysis and recommendations
@@ -446,10 +447,13 @@ class Evaluator:
         # Collect performance data
         expert_a_data = []
         expert_b_data = []
+        judge_data = []  # All cases (judge makes the final call)
 
         for data in self.agent_data:
             winner = data["winner"]
             is_correct = data["correct"]
+
+            judge_data.append({"correct": is_correct, "error_type": data["error_type"]})
 
             if winner == "Expert A":
                 expert_a_data.append({"correct": is_correct, "error_type": data["error_type"]})
@@ -457,10 +461,11 @@ class Evaluator:
                 expert_b_data.append({"correct": is_correct, "error_type": data["error_type"]})
 
         # Calculate base accuracies
+        judge_accuracy = sum(1 for d in judge_data if d["correct"]) / len(judge_data) if judge_data else 0
         expert_a_accuracy = sum(1 for d in expert_a_data if d["correct"]) / len(expert_a_data) if expert_a_data else 0
         expert_b_accuracy = sum(1 for d in expert_b_data if d["correct"]) / len(expert_b_data) if expert_b_data else 0
 
-        # Calculate accuracy by error type for each expert
+        # Calculate accuracy by error type for each voter
         def accuracy_by_error_type(data_list):
             by_type = {}
             for d in data_list:
@@ -480,66 +485,21 @@ class Evaluator:
                 }
             return result
 
+        judge_by_type = accuracy_by_error_type(judge_data)
         expert_a_by_type = accuracy_by_error_type(expert_a_data)
         expert_b_by_type = accuracy_by_error_type(expert_b_data)
 
-        # Simulate weight combinations to find optimal
-        # Test weights from 0.0 to 1.0 in 0.1 increments
-        best_weights = None
-        best_simulated_accuracy = 0
-
-        # For simulation, we need to know what each expert predicted for ALL cases
-        # Since we only have "winner" data, we can estimate based on current setup
-        # The winner is who the judge sided with, so we simulate weighted voting
-
-        weight_simulations = []
-        for w_a in [i/10 for i in range(0, 11)]:
-            w_b = 1.0 - w_a  # Weights sum to 1.0
-
-            # Simulate: if Expert A weight > threshold, use Expert A's correctness pattern
-            # This is an approximation since we don't have individual expert predictions
-            simulated_correct = 0
-            total = len(self.agent_data)
-
-            for data in self.agent_data:
-                winner = data["winner"]
-                is_correct = data["correct"]
-
-                if winner == "Expert A":
-                    # Expert A won - apply weight to decision
-                    if w_a >= 0.5:
-                        simulated_correct += 1 if is_correct else 0
-                    else:
-                        # Would have gone with Expert B if they existed
-                        simulated_correct += 1 if is_correct else 0
-                elif winner == "Expert B":
-                    if w_b >= 0.5:
-                        simulated_correct += 1 if is_correct else 0
-                    else:
-                        simulated_correct += 1 if is_correct else 0
-                else:  # Neither
-                    simulated_correct += 1 if is_correct else 0
-
-            simulated_accuracy = simulated_correct / total if total > 0 else 0
-            weight_simulations.append({
-                "weight_expert_a": w_a,
-                "weight_expert_b": w_b,
-                "simulated_accuracy": simulated_accuracy
-            })
-
-            if simulated_accuracy > best_simulated_accuracy:
-                best_simulated_accuracy = simulated_accuracy
-                best_weights = {"expert_a": w_a, "expert_b": w_b}
-
-        # Calculate recommended weights based on relative accuracy
-        # Higher accuracy expert should get proportionally higher weight
-        total_accuracy = expert_a_accuracy + expert_b_accuracy
+        # Calculate recommended weights for all three voters based on relative accuracy
+        # Higher accuracy voter gets proportionally higher weight
+        total_accuracy = judge_accuracy + expert_a_accuracy + expert_b_accuracy
         if total_accuracy > 0:
+            recommended_weight_judge = judge_accuracy / total_accuracy
             recommended_weight_a = expert_a_accuracy / total_accuracy
             recommended_weight_b = expert_b_accuracy / total_accuracy
         else:
-            recommended_weight_a = 0.5
-            recommended_weight_b = 0.5
+            recommended_weight_judge = 0.4
+            recommended_weight_a = 0.3
+            recommended_weight_b = 0.3
 
         # Determine which error types each expert handles better
         expert_a_strengths = []
@@ -567,38 +527,50 @@ class Evaluator:
                     "advantage": b_acc - a_acc
                 })
 
+        # Find best voter
+        voter_accuracies = {
+            "Judge": judge_accuracy,
+            "Expert A": expert_a_accuracy,
+            "Expert B": expert_b_accuracy
+        }
+        best_voter = max(voter_accuracies, key=voter_accuracies.get)
+
         return {
             "current_performance": {
+                "judge_accuracy": judge_accuracy,
+                "judge_total_cases": len(judge_data),
                 "expert_a_accuracy": expert_a_accuracy,
                 "expert_a_total_wins": len(expert_a_data),
                 "expert_b_accuracy": expert_b_accuracy,
                 "expert_b_total_wins": len(expert_b_data)
             },
             "recommended_weights": {
+                "judge": round(recommended_weight_judge, 3),
                 "expert_a": round(recommended_weight_a, 3),
                 "expert_b": round(recommended_weight_b, 3),
-                "reasoning": f"Based on relative accuracy: A={expert_a_accuracy:.1%} vs B={expert_b_accuracy:.1%}"
+                "reasoning": (
+                    f"Based on relative accuracy: "
+                    f"Judge={judge_accuracy:.1%}, A={expert_a_accuracy:.1%}, B={expert_b_accuracy:.1%}"
+                )
             },
             "weight_threshold_analysis": {
-                "should_increase_expert_a_weight": expert_a_accuracy > expert_b_accuracy,
-                "accuracy_difference": abs(expert_a_accuracy - expert_b_accuracy),
+                "best_voter": best_voter,
+                "accuracy_spread": max(voter_accuracies.values()) - min(voter_accuracies.values()),
                 "recommendation": (
-                    f"Expert A has higher accuracy ({expert_a_accuracy:.1%} vs {expert_b_accuracy:.1%}). "
-                    f"Consider weight_a={recommended_weight_a:.2f}, weight_b={recommended_weight_b:.2f}"
-                    if expert_a_accuracy > expert_b_accuracy else
-                    f"Expert B has higher accuracy ({expert_b_accuracy:.1%} vs {expert_a_accuracy:.1%}). "
-                    f"Consider weight_a={recommended_weight_a:.2f}, weight_b={recommended_weight_b:.2f}"
+                    f"{best_voter} has highest accuracy ({voter_accuracies[best_voter]:.1%}). "
+                    f"Recommended: judge={recommended_weight_judge:.2f}, "
+                    f"expert_a={recommended_weight_a:.2f}, expert_b={recommended_weight_b:.2f}"
                 )
             },
             "accuracy_by_error_type": {
+                "judge": judge_by_type,
                 "expert_a": expert_a_by_type,
                 "expert_b": expert_b_by_type
             },
             "expert_strengths": {
                 "expert_a_better_at": sorted(expert_a_strengths, key=lambda x: -x["advantage"]),
                 "expert_b_better_at": sorted(expert_b_strengths, key=lambda x: -x["advantage"])
-            },
-            "weight_simulations": weight_simulations
+            }
         }
 
     def save_results(
@@ -779,22 +751,21 @@ class Evaluator:
 
         # Current performance
         perf = weight_analysis.get("current_performance", {})
-        print(f"\n--- Current Expert Performance ---")
+        print(f"\n--- Current Voter Performance ---")
+        print(f"  Judge:    {perf.get('judge_accuracy', 0):.1%} accuracy ({perf.get('judge_total_cases', 0)} cases)")
         print(f"  Expert A: {perf.get('expert_a_accuracy', 0):.1%} accuracy ({perf.get('expert_a_total_wins', 0)} wins)")
         print(f"  Expert B: {perf.get('expert_b_accuracy', 0):.1%} accuracy ({perf.get('expert_b_total_wins', 0)} wins)")
 
-        # Recommended weights
+        # Recommended weights as .env values
         rec = weight_analysis.get("recommended_weights", {})
-        print(f"\n--- Recommended Weights ---")
-        print(f"  Expert A Weight: {rec.get('expert_a', 0.5):.1%}")
-        print(f"  Expert B Weight: {rec.get('expert_b', 0.5):.1%}")
+        w_judge = rec.get('judge', 0.4)
+        w_a = rec.get('expert_a', 0.3)
+        w_b = rec.get('expert_b', 0.3)
+        print(f"\n--- Recommended .env Weights ---")
+        print(f"  WEIGHT_JUDGE={w_judge:.2f}")
+        print(f"  WEIGHT_EXPERT_A={w_a:.2f}")
+        print(f"  WEIGHT_EXPERT_B={w_b:.2f}")
         print(f"  Reasoning: {rec.get('reasoning', 'N/A')}")
-
-        # Threshold analysis
-        threshold = weight_analysis.get("weight_threshold_analysis", {})
-        print(f"\n--- Threshold Recommendation ---")
-        print(f"  {threshold.get('recommendation', 'N/A')}")
-        print(f"  Accuracy difference: {threshold.get('accuracy_difference', 0):.1%}")
 
         # Expert strengths by error type
         strengths = weight_analysis.get("expert_strengths", {})
@@ -803,12 +774,12 @@ class Evaluator:
 
         if a_strengths:
             print(f"\n--- Expert A Strengths (by error type) ---")
-            for s in a_strengths[:5]:  # Show top 5
+            for s in a_strengths[:5]:
                 print(f"  {s['error_type']}: {s['expert_a_accuracy']:.1%} vs {s['expert_b_accuracy']:.1%} (+{s['advantage']:.1%})")
 
         if b_strengths:
             print(f"\n--- Expert B Strengths (by error type) ---")
-            for s in b_strengths[:5]:  # Show top 5
+            for s in b_strengths[:5]:
                 print(f"  {s['error_type']}: {s['expert_b_accuracy']:.1%} vs {s['expert_a_accuracy']:.1%} (+{s['advantage']:.1%})")
 
         print("\n" + "=" * 60)

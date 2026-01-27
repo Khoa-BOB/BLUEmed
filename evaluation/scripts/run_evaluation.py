@@ -127,11 +127,17 @@ def main():
         return
 
     metrics = evaluator.calculate_metrics()
+    agent_metrics = evaluator.calculate_agent_metrics()
+    weight_analysis = evaluator.calculate_optimal_weights()
+
     evaluator.print_summary(metrics)
+    evaluator.print_agent_summary(agent_metrics)
+    evaluator.print_weight_analysis(weight_analysis)
 
     json_path, csv_path = evaluator.save_results(
         metrics,
-        output_dir=resolve_path(args.eval_output)
+        output_dir=resolve_path(args.eval_output),
+        agent_metrics=agent_metrics
     )
 
     print("\n" + "=" * 60)
