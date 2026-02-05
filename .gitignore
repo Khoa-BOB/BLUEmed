@@ -85,6 +85,8 @@ evaluation/scripts/*
 !evaluation/scripts/batch_predict.py
 !evaluation/scripts/evaluate.py
 !evaluation/scripts/run_evaluation.py
+!evaluation/slurm/pred_batch.sh
+!evaluation/slurm/batch_predict.sh
 
 # --- Temporary files ---
 tempCodeRunnerFile.py
