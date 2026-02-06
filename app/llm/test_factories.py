@@ -89,7 +89,7 @@ def test_huggingface():
         llm = build_huggingface_llm(
             "meta-llama/Meta-Llama-3-8B-Instruct",
             temperature=0.2,
-            use_local=False
+            use_local=True
         )
         print("✓ HuggingFace LLM created successfully")
         

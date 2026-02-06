@@ -3,9 +3,9 @@
 #SBATCH --cpus-per-task=8
 #SBATCH --mem=32G
 #SBATCH --partition=bigTiger
-#SBATCH --gres=gpu:3
-#SBATCH --time=0-24:00:00
-#SBATCH --job-name=qwen3-predict
+#SBATCH --gres=gpu:2
+#SBATCH --time=0-10:00:00
+#SBATCH --job-name=batch-predict
 #SBATCH --output=/project/ntran5/BLUEmed/evaluation/slurm/logs/output_batch-predict-%j.log
 #SBATCH --error=/project/ntran5/BLUEmed/evaluation/slurm/logs/error_batch-predict-%j.log
 
@@ -163,157 +163,42 @@ if [[ "$EXPERT_MODEL" == hf:* ]] || [[ "$JUDGE_MODEL" == hf:* ]]; then
     fi
 fi
 
+
 # ------------------------------------------------------------------------------
-# Run Parameters (can be overridden via command line)
+# Run Main Application
 # ------------------------------------------------------------------------------
 
-# Default values
-TEST_FILE="${TEST_FILE:-test_data/test.json}"
-OUTPUT_DIR="${OUTPUT_DIR:-logs/zeroshot/debates_multiagents_qwen3_4b}"
-CHUNK_SIZE="${CHUNK_SIZE:-25}"
-DELAY="${DELAY:-0}"  # API rate limit delay in seconds
-
-# Parse command line arguments passed to sbatch
-while [[ $# -gt 0 ]]; do
-    case $1 in
-        --test-file)
-            TEST_FILE="$2"
-            shift 2
-            ;;
-        --output-dir)
-            OUTPUT_DIR="$2"
-            shift 2
-            ;;
-        --chunk-size)
-            CHUNK_SIZE="$2"
-            shift 2
-            ;;
-        --delay)
-            DELAY="$2"
-            shift 2
-            ;;
-        --reset)
-            RESET_FLAG="--reset"
-            shift
-            ;;
-        *)
-            shift
-            ;;
-    esac
-done
-
-
-# Print run configuration
-echo ""
 echo "=========================================="
-echo "Run Configuration:"
-echo "  Test File: $TEST_FILE"
-echo "  Output Dir: $OUTPUT_DIR"
-echo "  Full Output Path: $(pwd)/$OUTPUT_DIR"
-echo "  Chunk Size: $CHUNK_SIZE"
-echo "  Delay: ${DELAY}s"
-echo "  Reset: ${RESET_FLAG:-yes}"
+echo "Starting BLUEmed Application..."
 echo "=========================================="
-echo ""
 
-# Verify test file exists
-if [ ! -f "$TEST_FILE" ]; then
-    echo "ERROR: Test file not found: $TEST_FILE"
-    echo "Full path: $(pwd)/$TEST_FILE"
-    echo "Available test files:"
-    ls -la test_data/*.json 2>/dev/null || echo "  No test files found in test_data/"
-    exit 1
-fi
-
-# Create output directory if it doesn't exist
-mkdir -p "$OUTPUT_DIR"
-echo "Output directory verified: $OUTPUT_DIR"
-echo ""
-
-# ------------------------------------------------------------------------------
-# Run Batch Prediction
-# ------------------------------------------------------------------------------
-
-echo "Starting batch prediction..."
-echo ""
-
-python3 evaluation/scripts/batch_predict.py \
-    --test-file "$TEST_FILE" \
-    --output-dir "$OUTPUT_DIR" \
-    --chunk-size "$CHUNK_SIZE" \
-    --delay "$DELAY" \
-    $RESET_FLAG
+# Run the main application
+python main.py "$@"
 
 # Capture exit code
 EXIT_CODE=$?
 
 # ------------------------------------------------------------------------------
-# Post-processing
+# Record End Time and Calculate Duration
 # ------------------------------------------------------------------------------
-# Calculate total running time
+
 END_TIME=$(date +%s)
 END_DATETIME=$(date)
-TOTAL_SECONDS=$((END_TIME - START_TIME))
-HOURS=$((TOTAL_SECONDS / 3600))
-MINUTES=$(((TOTAL_SECONDS % 3600) / 60))
-SECONDS=$((TOTAL_SECONDS % 60))
+DURATION=$((END_TIME - START_TIME))
 
-echo ""
-echo "=========================================="
-echo "Batch prediction completed with exit code: $EXIT_CODE"
-echo "Start Time:  $START_DATETIME"
-echo "End Time:    $END_DATETIME"
-echo "Total Time:  ${HOURS}h ${MINUTES}m ${SECONDS}s"
+# Convert duration to hours, minutes, seconds
+HOURS=$((DURATION / 3600))
+MINUTES=$(((DURATION % 3600) / 60))
+SECONDS=$((DURATION % 60))
 
 echo "=========================================="
+echo "Job Completed"
+echo "=========================================="
+echo "Start Time:    $START_DATETIME"
+echo "End Time:      $END_DATETIME"
+echo "Duration:      ${HOURS}h ${MINUTES}m ${SECONDS}s (${DURATION} seconds total)"
+echo "Exit Code:     $EXIT_CODE"
+echo "=========================================="
 
-# Run evaluation if prediction was successful
-if [ $EXIT_CODE -eq 0 ]; then
-    echo ""
-    echo "Running evaluation..."
-    python3 evaluation/scripts/evaluate.py --results-dir "$OUTPUT_DIR"
-fi
-
-# Print summary of results
-echo ""
-echo "Results saved to: $OUTPUT_DIR"
-echo "Full path: $(pwd)/$OUTPUT_DIR"
-echo "Evaluation results: evaluation/results/"
-
-# List generated files with detailed info
-echo ""
-echo "Checking for result files..."
-RESULT_COUNT=$(ls "$OUTPUT_DIR"/result_*.json 2>/dev/null | wc -l)
-echo "Found $RESULT_COUNT result files in $OUTPUT_DIR"
-
-if [ $RESULT_COUNT -gt 0 ]; then
-    echo ""
-    echo "Generated result files (last 10):"
-    ls -lh "$OUTPUT_DIR"/result_*.json 2>/dev/null | tail -10
-
-    echo ""
-    echo "First result file:"
-    ls "$OUTPUT_DIR"/result_*.json 2>/dev/null | head -1
-else
-    echo "WARNING: No result_*.json files found!"
-    echo "Checking for any .json files in $OUTPUT_DIR:"
-    ls -la "$OUTPUT_DIR"/*.json 2>/dev/null | tail -10
-
-    echo ""
-    echo "Directory contents:"
-    ls -la "$OUTPUT_DIR" 2>/dev/null
-fi
-
-# Check checkpoint status
-if [ -f "evaluation/checkpoint.json" ]; then
-    echo ""
-    echo "Checkpoint status:"
-    python3 -c "import json; data=json.load(open('evaluation/checkpoint.json')); print(f\"Processed: {data['processed_count']} cases\"); print(f\"Sample IDs: {data['processed_ids'][:5]}...\")"
-fi
-
-# CRITICAL DEBUG: Check if files are being written elsewhere
-echo ""
-echo "Searching for result files in other locations..."
-find . -name "result_*.json" -type f 2>/dev/null | head -20
-
+# Exit with the same code as main.py
 exit $EXIT_CODE

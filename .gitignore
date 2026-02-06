@@ -94,3 +94,7 @@ tempCodeRunnerFile.py
 
 # --- Test outputs ---
 test_results/
+
+LLM_TOKEN_ANALYSIS.md
+
+hf_cache

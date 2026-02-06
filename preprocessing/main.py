@@ -8,7 +8,7 @@ and persists a Chroma vector store.
 
 import os
 from pathlib import Path
-from langchain_community.embeddings import OllamaEmbeddings
+# from langchain_community.embeddings import OllamaEmbeddings
 from langchain_community.vectorstores import Chroma
 
 from build_vectorstore import initialize_vectorstore
@@ -17,7 +17,7 @@ from build_vectorstore import initialize_vectorstore
 DATA_DIR = Path(os.getenv("DATA_DIR", "data"))
 PERSIST_DIR = Path(os.getenv("PERSIST_DIR", "chroma_db"))
 EMBEDDING_MODEL = os.getenv("EMBEDDING_MODEL", "llama2")
-OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
+# OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
 
 
 def main():

@@ -5,7 +5,7 @@ class Settings(BaseSettings):
     # Define your fields with optional defaults
     EXPERT_MODEL: str
     JUDGE_MODEL: str
-    OLLAMA_URL: str
+    # OLLAMA_URL: str
     PERSIST_DIR: str
 
     # Google Gemini API
@@ -18,7 +18,7 @@ class Settings(BaseSettings):
     
     # HuggingFace API (for inference endpoints)
     HUGGINGFACE_API_KEY: str = ""
-    HUGGINGFACE_MODEL: str = "meta-llama/Meta-Llama-3-8B-Instruct"
+    HUGGINGFACE_MODEL: str = "Qwen/Qwen3-4B-Instruct-2507"
 
     # Embedding Model for RAG
     GOOGLE_API_KEY_EMBED: str = ""

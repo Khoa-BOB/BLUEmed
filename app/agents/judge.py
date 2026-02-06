@@ -56,6 +56,9 @@ def Judge_node(state: MedState, llm) -> dict:
 
     resp = llm.invoke(messages)
 
+    # Handle both string and object responses
+    response_content = resp.content if hasattr(resp, 'content') else str(resp)
+
     # Try to parse JSON response with robust multi-method extraction
     import re
     final_answer = "UNKNOWN"
@@ -63,13 +66,13 @@ def Judge_node(state: MedState, llm) -> dict:
 
     # Method 1: Try direct JSON parsing first
     try:
-        decision_json = json.loads(resp.content)
+        decision_json = json.loads(response_content)
     except json.JSONDecodeError:
         pass
 
     # Method 2: Extract JSON from markdown code blocks (```json ... ```)
     if not decision_json:
-        markdown_match = re.search(r'```(?:json)?\s*(\{.*\})\s*```', resp.content, re.DOTALL)
+        markdown_match = re.search(r'```(?:json)?\s*(\{.*\})\s*```', response_content, re.DOTALL)
         if markdown_match:
             try:
                 decision_json = json.loads(markdown_match.group(1))
@@ -78,7 +81,7 @@ def Judge_node(state: MedState, llm) -> dict:
 
     # Method 3: Greedy match for any JSON object
     if not decision_json:
-        json_match = re.search(r'\{.*\}', resp.content, re.DOTALL)
+        json_match = re.search(r'\{.*\}', response_content, re.DOTALL)
         if json_match:
             try:
                 decision_json = json.loads(json_match.group(0))
@@ -87,7 +90,7 @@ def Judge_node(state: MedState, llm) -> dict:
 
     # Method 4: Extract Final Answer directly using regex as last fallback
     if not decision_json:
-        answer_match = re.search(r'"Final Answer":\s*"(CORRECT|INCORRECT)"', resp.content)
+        answer_match = re.search(r'"Final Answer":\s*"(CORRECT|INCORRECT)"', response_content)
         if answer_match:
             final_answer = answer_match.group(1)
 
@@ -109,7 +112,7 @@ def Judge_node(state: MedState, llm) -> dict:
         llm_final_classification=final_answer,
         expert_a_content=expertA_content,
         expert_b_content=expertB_content,
-        judge_content=resp.content
+        judge_content=response_content
     )
 
     final_classification = safety_result["final_classification"]
@@ -165,7 +168,7 @@ def Judge_node(state: MedState, llm) -> dict:
     print("="*60 + "\n")
 
     return {
-        "judge_decision": resp.content,
+        "judge_decision": response_content,
         "final_answer": final_classification,
         "safety_diagnostics": safety_result,
         "judge_retrieved_mayo_docs": mayo_docs,

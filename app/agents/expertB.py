@@ -105,10 +105,13 @@ def expertB_node(state: MedState, llm) -> dict:
 
     resp = llm.invoke(messages)
 
+    # Handle both string and object responses
+    response_content = resp.content if hasattr(resp, 'content') else str(resp)
+
     # Create debate argument
     new_argument: DebateArgument = {
         "round": current_round,
-        "content": resp.content
+        "content": response_content
     }
 
     # Update arguments list
