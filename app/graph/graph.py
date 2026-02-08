@@ -39,17 +39,62 @@ def check_round1_consensus(state: MedState) -> str:
 
             # Extract classifications
             def extract_classification(arg_text):
-                """Extract FINAL CLASSIFICATION from argument."""
-                match = re.search(r'FINAL CLASSIFICATION:\s*(CORRECT|INCORRECT)', arg_text, re.IGNORECASE)
+                """Extract FINAL CLASSIFICATION from argument (handles multiple formats)."""
+                # Try primary pattern: "FINAL CLASSIFICATION:" with optional markdown and whitespace
+                match = re.search(
+                    r'FINAL\s+CLASSIFICATION:?\s*\*{0,2}\s*(CORRECT|INCORRECT)\s*\*{0,2}',
+                    arg_text,
+                    re.IGNORECASE | re.MULTILINE
+                )
+                if match:
+                    return match.group(1).upper()
+                
+                # Fallback: Look for concluding sentence "this note is [CORRECT/INCORRECT]"
+                match = re.search(
+                    r'this\s+note\s+is\s+\*{0,2}\s*(CORRECT|INCORRECT)\s*\*{0,2}',
+                    arg_text,
+                    re.IGNORECASE
+                )
                 return match.group(1).upper() if match else None
 
             def extract_terms(arg_text):
-                """Extract wrong and correct terms from argument."""
-                wrong_match = re.search(r'Wrong term:\s*["\']?([^"\'\n]+)["\']?', arg_text, re.IGNORECASE)
-                correct_match = re.search(r'Correct term:\s*["\']?([^"\'\n]+)["\']?', arg_text, re.IGNORECASE)
-
-                wrong_term = wrong_match.group(1).strip() if wrong_match else None
-                correct_term = correct_match.group(1).strip() if correct_match else None
+                """Extract wrong and correct terms from argument (handles multiple formats)."""
+                # More flexible pattern that handles:
+                # - Various capitalizations (Wrong Term, Wrong term, wrong term)
+                # - Markdown formatting (**, *, __, _)
+                # - Quotes and whitespace variations
+                # - Multi-word terms with special characters
+                
+                wrong_patterns = [
+                    r'Wrong\s+[Tt]erm:\s*[\*_]{0,2}\s*["\']?\s*([^"\'\n\*_]{3,}?)\s*["\']?\s*[\*_]{0,2}',
+                    r'\-\s*Wrong\s+[Tt]erm:\s*[\*_]{0,2}\s*([^"\'\n\*_]{3,}?)\s*[\*_]{0,2}',
+                ]
+                
+                correct_patterns = [
+                    r'Correct\s+[Tt]erm:\s*[\*_]{0,2}\s*["\']?\s*([^"\'\n\*_]{3,}?)\s*["\']?\s*[\*_]{0,2}',
+                    r'\-\s*Correct\s+[Tt]erm:\s*[\*_]{0,2}\s*([^"\'\n\*_]{3,}?)\s*[\*_]{0,2}',
+                ]
+                
+                wrong_term = None
+                correct_term = None
+                
+                # Try each pattern for wrong term
+                for pattern in wrong_patterns:
+                    match = re.search(pattern, arg_text, re.IGNORECASE)
+                    if match:
+                        wrong_term = match.group(1).strip()
+                        # Remove any trailing markdown or punctuation
+                        wrong_term = re.sub(r'[\*_]+$', '', wrong_term).strip()
+                        break
+                
+                # Try each pattern for correct term
+                for pattern in correct_patterns:
+                    match = re.search(pattern, arg_text, re.IGNORECASE)
+                    if match:
+                        correct_term = match.group(1).strip()
+                        # Remove any trailing markdown or punctuation
+                        correct_term = re.sub(r'[\*_]+$', '', correct_term).strip()
+                        break
 
                 return wrong_term, correct_term
 
